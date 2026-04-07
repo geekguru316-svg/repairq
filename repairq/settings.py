@@ -62,7 +62,7 @@ DATABASES = {
 # Use PostgreSQL if DATABASE_URL is set (e.g. on Render)
 database_url = os.environ.get('DATABASE_URL', '').strip()
 if database_url:
-    db_from_env = dj_database_url.config(conn_max_age=600)
+    db_from_env = dj_database_url.parse(database_url, conn_max_age=600)
     DATABASES['default'].update(db_from_env)
 
 
