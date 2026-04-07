@@ -59,11 +59,15 @@ DATABASES = {
     }
 }
 
-# Use PostgreSQL if DATABASE_URL is set (e.g. on Render)
+# Use PostgreSQL if DATABASE_URL is set and valid (e.g. on Render)
 database_url = os.environ.get('DATABASE_URL', '').strip()
-if database_url:
-    db_from_env = dj_database_url.parse(database_url, conn_max_age=600)
-    DATABASES['default'].update(db_from_env)
+VALID_SCHEMES = ('postgres://', 'postgresql://', 'postgis://')
+if database_url and any(database_url.startswith(s) for s in VALID_SCHEMES):
+    try:
+        db_from_env = dj_database_url.parse(database_url, conn_max_age=600)
+        DATABASES['default'].update(db_from_env)
+    except Exception:
+        pass  # Fall back to SQLite if URL is malformed
 
 
 AUTH_PASSWORD_VALIDATORS = [
