@@ -23,9 +23,9 @@ class Command(BaseCommand):
 
         # ── Real technician Django accounts ───────────────────────────────────
         real_techs = [
-            ('jayson',  'Jayson',  'Tecson',    'jayson@repairq.com',   'IT Support',  '#3b82f6', ['hardware', 'software']),
-            ('arjun',   'Arjun',   'Sharma',    'arjun@repairq.com',    'Network',     '#7c3aed', ['network', 'security']),
-            ('allan',   'Allan',   'Macaraeg',  'allan@repairq.com',    'IT Support',  '#059669', ['hardware', 'network']),
+            ('jayson',  'Jayson W.',      'Cabradilla', 'jayson.cabradilla@company.com', 'IT Support', '#8b5cf6', ['hardware', 'network', 'software']),
+            ('arjun',   'Arjun',          'Haincadto',  'geekguru316@gmail.com',         'IT Support', '#f59e0b', ['hardware', 'other', 'software']),
+            ('allan',   'Engr. Allan C.', 'Abella',     'allan.abella@company.com',      'IT Support', '#10b981', ['hardware', 'network', 'security']),
         ]
 
         for uname, fname, lname, email, dept, color, skills in real_techs:
