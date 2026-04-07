@@ -6,27 +6,62 @@ from tickets.models import Ticket, Technician, TechnicianSkill, TicketNote, Repo
 
 
 class Command(BaseCommand):
-    help = 'Seed the database with demo data'
+    help = 'Seed the database with demo data and default accounts'
 
     def handle(self, *args, **kwargs):
         self.stdout.write('Seeding demo data...')
 
-        # Admin user
+        # ── Admin user ────────────────────────────────────────────────────────
         admin, _ = User.objects.get_or_create(username='admin')
-        admin.set_password('admin')
+        admin.set_password('admin123')
         admin.is_staff = True
         admin.is_superuser = True
-        admin.first_name = 'Maria'
-        admin.last_name = 'Alcantara'
+        admin.first_name = 'Admin'
+        admin.last_name = 'User'
+        admin.email = 'admin@repairq.com'
         admin.save()
 
-        # Regular users
+        # ── Real technician Django accounts ───────────────────────────────────
+        real_techs = [
+            ('jayson',  'Jayson',  'Tecson',    'jayson@repairq.com',   'IT Support',  '#3b82f6', ['hardware', 'software']),
+            ('arjun',   'Arjun',   'Sharma',    'arjun@repairq.com',    'Network',     '#7c3aed', ['network', 'security']),
+            ('allan',   'Allan',   'Macaraeg',  'allan@repairq.com',    'IT Support',  '#059669', ['hardware', 'network']),
+        ]
+
+        for uname, fname, lname, email, dept, color, skills in real_techs:
+            # Django user account
+            u, _ = User.objects.get_or_create(username=uname)
+            u.set_password('tech123')
+            u.first_name = fname
+            u.last_name = lname
+            u.email = email
+            u.is_staff = True   # staff access (not superuser)
+            u.save()
+
+            # Linked Technician profile
+            tech, _ = Technician.objects.get_or_create(email=email, defaults={
+                'name': f'{fname} {lname}',
+                'department': dept,
+                'availability': 'available',
+                'color': color,
+            })
+            tech.name = f'{fname} {lname}'
+            tech.user = u
+            tech.department = dept
+            tech.color = color
+            tech.save()
+
+            TechnicianSkill.objects.filter(technician=tech).delete()
+            for skill in skills:
+                TechnicianSkill.objects.create(technician=tech, skill=skill)
+
+        # ── Demo regular users ────────────────────────────────────────────────
         users = {}
         for uname, fname, lname in [
-            ('rico', 'Rico', 'Domingo'),
-            ('ana', 'Ana', 'Cruz'),
+            ('rico',   'Rico',   'Domingo'),
+            ('ana',    'Ana',    'Cruz'),
             ('miguel', 'Miguel', 'Santos'),
-            ('linda', 'Linda', 'Reyes'),
+            ('linda',  'Linda',  'Reyes'),
         ]:
             u, _ = User.objects.get_or_create(username=uname)
             u.set_password('password')
@@ -35,24 +70,15 @@ class Command(BaseCommand):
             u.save()
             users[uname] = u
 
-        # Technicians
-        techs_data = [
-            ('Joel Reyes',  'joel.reyes@company.com',  'Infrastructure', 'available', '#3b82f6',
-             ['hardware', 'network']),
-            ('Sara Lim',    'sara.lim@company.com',    'IT Support',     'busy',      '#7c3aed',
-             ['network', 'software']),
-            ('Ben Mateo',   'ben.mateo@company.com',   'IT Support',     'available', '#059669',
-             ['hardware', 'network']),
-            ('Aida Kwan',   'aida.kwan@company.com',   'Security',       'busy',      '#dc2626',
-             ['security', 'network']),
-            ('Dan Garcia',  'dan.garcia@company.com',  'IT Support',     'available', '#ca8a04',
-             ['hardware', 'software']),
-            ('Nina Perez',  'nina.perez@company.com',  'IT Support',     'off',       '#475569',
-             ['software']),
+        # ── Demo additional technicians ───────────────────────────────────────
+        demo_techs_data = [
+            ('Joel Reyes',  'joel.reyes@repairq.com',  'Infrastructure', 'available', '#ca8a04', ['hardware', 'network']),
+            ('Sara Lim',    'sara.lim@repairq.com',    'IT Support',     'busy',      '#dc2626', ['network', 'software']),
+            ('Aida Kwan',   'aida.kwan@repairq.com',   'Security',       'busy',      '#475569', ['security', 'network']),
         ]
 
-        techs = {}
-        for name, email, dept, avail, color, skills in techs_data:
+        demo_techs = {}
+        for name, email, dept, avail, color, skills in demo_techs_data:
             t, _ = Technician.objects.get_or_create(email=email, defaults={
                 'name': name, 'department': dept,
                 'availability': avail, 'color': color,
@@ -62,44 +88,51 @@ class Command(BaseCommand):
             TechnicianSkill.objects.filter(technician=t).delete()
             for skill in skills:
                 TechnicianSkill.objects.create(technician=t, skill=skill)
-            techs[name] = t
+            demo_techs[name] = t
 
+        # ── Sample tickets ────────────────────────────────────────────────────
         now = timezone.now()
-
-        # Sample tickets
         tickets_data = [
-            ('Server room AC failure',          'The air conditioning unit in Server Room B1 stopped functioning at approximately 09:30. Room temperature rising rapidly. Current reading is 32°C and climbing. Critical systems at risk of thermal shutdown.',
-             'critical', 'hardware', 'in_progress', techs['Joel Reyes'],   now - timedelta(hours=2),  now - timedelta(hours=2) + timedelta(hours=4),  users['rico']),
-            ('Network printer offline — Floor 3','The shared printer on Floor 3 (HP LaserJet Pro) is offline. Users cannot print documents. Printer shows error code E04 on display.',
-             'high',     'network',  'assigned',    techs['Ben Mateo'],    now - timedelta(hours=3),  now - timedelta(hours=3) + timedelta(hours=8),  users['ana']),
-            ('Laptop screen cracked — R. Santos','Laptop screen cracked after it was accidentally dropped. Device still boots but display is unusable. Asset tag: LT-2045.',
-             'medium',   'hardware', 'received',    None,                  now - timedelta(hours=4),  now - timedelta(hours=4) + timedelta(hours=48), users['rico']),
-            ('VPN authentication error',         'Unable to authenticate to corporate VPN after password reset. Receiving error: "Authentication failed - credentials invalid". Affects remote work.',
-             'high',     'software', 'in_progress', techs['Sara Lim'],    now - timedelta(hours=5),  now - timedelta(hours=5) + timedelta(hours=8),  users['miguel']),
-            ('Email quota exceeded',             'User mailbox has exceeded the 10GB quota. Unable to send or receive emails. Requesting quota increase or archive assistance.',
-             'low',      'software', 'resolved',    techs['Dan Garcia'],  now - timedelta(hours=6),  now - timedelta(hours=6) + timedelta(hours=120), users['linda']),
-            ('Mouse not detected on startup',    'Wireless mouse not detected on PC startup. Tried different USB port and new batteries. Issue persists.',
-             'low',      'hardware', 'triaged',     None,                  now - timedelta(hours=7),  now - timedelta(hours=7) + timedelta(hours=120), users['ana']),
-            ('Database connection timeout',      'Production database returning connection timeouts intermittently. Affecting 3 internal applications. Started around 08:00 today.',
-             'critical', 'network',  'in_progress', techs['Aida Kwan'],   now - timedelta(days=1),   now - timedelta(days=1) + timedelta(hours=4),   users['rico']),
-            ('Projector HDMI port damaged',      'HDMI port on Boardroom projector physically damaged. Cannot connect laptops for presentations. Asset tag: PR-0012.',
-             'medium',   'hardware', 'received',    None,                  now - timedelta(hours=12), now - timedelta(hours=12) + timedelta(hours=48), users['miguel']),
-            ('Antivirus definitions outdated',   'Security scan flagging that antivirus definitions are 14 days out of date on 12 workstations. Auto-update appears to have failed.',
-             'high',     'security', 'assigned',    techs['Aida Kwan'],   now - timedelta(hours=10), now - timedelta(hours=10) + timedelta(hours=8),  users['linda']),
-            ('Windows update failure',           'Workstation failing to install latest Windows security patches. Update fails at 87% with error code 0x80070057.',
-             'medium',   'software', 'resolved',    techs['Sara Lim'],    now - timedelta(days=2),   now - timedelta(days=2) + timedelta(hours=48),  users['rico']),
+            ('Server room AC failure',
+             'The air conditioning unit in Server Room B1 stopped functioning. Room temperature rising rapidly.',
+             'critical', 'hardware', 'in_progress', demo_techs['Joel Reyes'],
+             now - timedelta(hours=2), now - timedelta(hours=2) + timedelta(hours=4),
+             users['rico'], 'Rico Domingo'),
+
+            ('Network printer offline — Floor 3',
+             'The shared printer on Floor 3 is offline. Users cannot print documents.',
+             'high', 'network', 'assigned', demo_techs['Joel Reyes'],
+             now - timedelta(hours=3), now - timedelta(hours=3) + timedelta(hours=8),
+             users['ana'], 'Ana Cruz'),
+
+            ('VPN authentication error',
+             'Unable to authenticate to corporate VPN after password reset.',
+             'high', 'software', 'in_progress', demo_techs['Sara Lim'],
+             now - timedelta(hours=5), now - timedelta(hours=5) + timedelta(hours=8),
+             users['miguel'], 'Miguel Santos'),
+
+            ('Database connection timeout',
+             'Production database returning connection timeouts intermittently.',
+             'critical', 'network', 'in_progress', demo_techs['Aida Kwan'],
+             now - timedelta(days=1), now - timedelta(days=1) + timedelta(hours=4),
+             users['rico'], 'Rico Domingo'),
+
+            ('Antivirus definitions outdated',
+             'Security scan flagging antivirus definitions are 14 days out of date on 12 workstations.',
+             'high', 'security', 'assigned', demo_techs['Aida Kwan'],
+             now - timedelta(hours=10), now - timedelta(hours=10) + timedelta(hours=8),
+             users['linda'], 'Linda Reyes'),
         ]
 
-        for title, desc, pri, cat, status, tech, created, sla_due, user in tickets_data:
+        for title, desc, pri, cat, status, tech, created, sla_due, user, req_name in tickets_data:
             if Ticket.objects.filter(title=title).exists():
                 continue
             t = Ticket(
                 title=title, description=desc, priority=pri, category=cat,
                 status=status, assigned_to=tech, submitted_by=user,
-                sla_due_at=sla_due,
+                sla_due_at=sla_due, requester_name=req_name,
             )
             t.save()
-            t.created_at = created
             if status in ('resolved', 'closed'):
                 t.resolved_at = created + timedelta(hours=3)
             Ticket.objects.filter(pk=t.pk).update(created_at=created, resolved_at=t.resolved_at)
@@ -114,12 +147,23 @@ class Command(BaseCommand):
                     content=f'Assigned to {tech.name}.', is_internal=True,
                 )
 
-        # Report schedules
-        for name, freq in [('Daily Queue Digest', 'daily'), ('Weekly Performance', 'weekly'), ('Monthly Executive Summary', 'monthly')]:
+        # ── Report schedules ──────────────────────────────────────────────────
+        for name, freq in [
+            ('Daily Queue Digest', 'daily'),
+            ('Weekly Performance', 'weekly'),
+            ('Monthly Executive Summary', 'monthly'),
+        ]:
             ReportSchedule.objects.get_or_create(
                 name=name,
-                defaults={'frequency': freq, 'recipients': 'admin@company.com', 'format': 'pdf', 'created_by': admin}
+                defaults={'frequency': freq, 'recipients': 'admin@repairq.com',
+                          'format': 'pdf', 'created_by': admin}
             )
 
-        self.stdout.write(self.style.SUCCESS('Demo data seeded successfully!'))
-        self.stdout.write('Login: admin / admin')
+        self.stdout.write(self.style.SUCCESS('\n✅ Demo data seeded successfully!'))
+        self.stdout.write('─' * 40)
+        self.stdout.write('🔑 LOGIN CREDENTIALS:')
+        self.stdout.write('  Admin   → username: admin   | password: admin123')
+        self.stdout.write('  Jayson  → username: jayson  | password: tech123')
+        self.stdout.write('  Arjun   → username: arjun   | password: tech123')
+        self.stdout.write('  Allan   → username: allan   | password: tech123')
+        self.stdout.write('─' * 40)
