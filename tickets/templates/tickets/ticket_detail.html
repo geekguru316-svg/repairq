@@ -1,0 +1,205 @@
+{% extends 'tickets/base.html' %}
+{% block title %}{{ ticket.ticket_id }}{% endblock %}
+{% block page_title %}{{ ticket.ticket_id }}{% endblock %}
+
+{% block extra_head %}
+<style>
+.detail-grid{display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.info-row{display:flex;flex-direction:column;gap:3px}
+.info-key{font-size:11px;color:var(--muted)}
+.info-val{font-size:13px;font-weight:500}
+.timeline{display:flex;flex-direction:column}
+.tl-item{display:flex;gap:12px;align-items:flex-start;padding-bottom:16px;position:relative}
+.tl-item:not(:last-child)::after{content:'';position:absolute;left:11px;top:26px;width:1px;height:calc(100% - 26px);background:var(--border)}
+.tl-dot{width:24px;height:24px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;z-index:1}
+.tl-action{font-size:13px;font-weight:500}
+.tl-meta{font-size:11px;color:var(--muted);margin-top:2px}
+.tl-note{font-size:12px;color:var(--muted);margin-top:6px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:8px 10px;font-family:var(--mono);line-height:1.5}
+</style>
+{% endblock %}
+
+{% block topbar_actions %}
+<a class="btn btn-ghost" href="{% url 'ticket_list' %}">← Back to Queue</a>
+<a class="btn btn-primary" href="{% url 'ticket_create' %}">
+  <svg fill="none" viewBox="0 0 14 14" stroke="currentColor" stroke-width="2.5"><path d="M7 2v10M2 7h10"/></svg>
+  New Ticket
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="detail-grid">
+
+  <!-- Left: main info -->
+  <div>
+    <!-- Header -->
+    <div class="card mb-16">
+      <div style="padding:20px 22px;">
+        <div style="font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:6px;">{{ ticket.ticket_id }}</div>
+        <div style="font-size:20px;font-weight:700;font-family:var(--head);margin-bottom:10px;">{{ ticket.title }}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <span class="badge b-{{ ticket.status|cut:'_' }}">{{ ticket.get_status_display }}</span>
+          <span class="pri pri-{{ ticket.priority }}">{{ ticket.priority|upper }}</span>
+          <span style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:4px;">
+            <span style="text-transform:capitalize;">{{ ticket.category }}</span>
+          </span>
+          {% if ticket.is_overdue %}
+          <span style="background:rgba(220,38,38,.15);color:#f87171;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;font-family:var(--mono);">⚠ SLA BREACHED</span>
+          {% endif %}
+        </div>
+      </div>
+      <hr style="border:none;border-top:1px solid var(--border);">
+      <div style="padding:16px 22px;">
+        <div style="font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Description</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.7;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rad);padding:12px 14px;">{{ ticket.description }}</div>
+      </div>
+    </div>
+
+    <!-- Details grid -->
+    <div class="card mb-16">
+      <div class="card-header"><div class="card-title">Ticket Details</div></div>
+      <div style="padding:16px 20px;">
+        <div class="info-grid">
+          <div class="info-row"><div class="info-key">Requester Name</div><div class="info-val">{{ ticket.requester_name }}</div></div>
+          <div class="info-row"><div class="info-key">Submitted Account</div><div class="info-val">{% if ticket.submitted_by %}{{ ticket.submitted_by.get_full_name|default:ticket.submitted_by.username }}{% else %}Guest / Public{% endif %}</div></div>
+          <div class="info-row"><div class="info-key">Assigned To</div><div class="info-val">{% if ticket.assigned_to %}{{ ticket.assigned_to.name }}{% else %}Unassigned{% endif %}</div></div>
+          <div class="info-row"><div class="info-key">Department / Asset</div><div class="info-val">{{ ticket.location|default:"—" }}</div></div>
+          <div class="info-row"><div class="info-key">Category</div><div class="info-val" style="text-transform:capitalize;">{{ ticket.category }}</div></div>
+          <div class="info-row"><div class="info-key">Created</div><div class="info-val">{{ ticket.created_at|date:"M d, Y H:i" }}</div></div>
+          <div class="info-row"><div class="info-key">SLA Deadline</div>
+            <div class="info-val" style="color:{% if ticket.is_overdue %}#f87171{% else %}var(--text){% endif %};">
+              {{ ticket.sla_due_at|date:"M d, Y H:i"|default:"—" }}
+              {% if ticket.is_overdue %}<span style="font-size:11px;"> (Breached)</span>{% endif %}
+            </div>
+          </div>
+          {% if ticket.resolved_at %}
+          <div class="info-row"><div class="info-key">Resolved At</div><div class="info-val">{{ ticket.resolved_at|date:"M d, Y H:i" }}</div></div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">Activity Timeline</div></div>
+      <div style="padding:16px 20px;">
+        <div class="timeline">
+          {% for note in notes %}
+          <div class="tl-item">
+            <div class="tl-dot" style="background:{% if note.note_type == 'escalation' %}rgba(220,38,38,.2);color:#f87171{% elif note.note_type == 'status_change' %}rgba(37,99,235,.2);color:#60a5fa{% else %}rgba(22,163,74,.2);color:#4ade80{% endif %};">
+              {% if note.author %}{{ note.author.first_name.0 }}{{ note.author.last_name.0 }}{% else %}S{% endif %}
+            </div>
+            <div class="tl-content">
+              <div class="tl-action">
+                {% if note.note_type == 'status_change' %}Status update{% elif note.note_type == 'escalation' %}Escalation{% elif note.note_type == 'diagnostic' %}Diagnostic note{% else %}Comment{% endif %}
+                {% if note.is_internal %}<span style="font-size:10px;color:var(--hint);margin-left:6px;">[internal]</span>{% endif %}
+              </div>
+              <div class="tl-meta">{% if note.author %}{{ note.author.get_full_name|default:note.author.username }}{% else %}System{% endif %} · {{ note.created_at|date:"M d, H:i" }}</div>
+              {% if note.content %}
+              <div class="tl-note">{{ note.content }}</div>
+              {% endif %}
+            </div>
+          </div>
+          {% empty %}
+          <div class="text-muted" style="font-size:13px;">No activity yet.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: actions panel -->
+  <!-- Right: actions panel -->
+  <div>
+    {% if user.is_superuser or user.technician == ticket.assigned_to %}
+    <div class="card mb-16">
+      <div class="card-header"><div class="card-title">Update Ticket</div></div>
+      <div style="padding:18px 20px;">
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="update_status">
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <select name="status" class="form-control">
+              {% for val, label in ticket.STATUS_CHOICES %}
+              <option value="{{ val }}" {% if ticket.status == val %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Assigned To</label>
+            <select name="assigned_to" class="form-control">
+              <option value="">Unassigned</option>
+              {% for tech in technicians %}
+              <option value="{{ tech.id }}" {% if ticket.assigned_to and ticket.assigned_to.id == tech.id %}selected{% endif %}>{{ tech.name }} ({{ tech.open_ticket_count }} open)</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Department / Asset</label>
+            <input type="text" name="location" class="form-control" value="{{ ticket.location }}" placeholder="Room number, serial, etc.">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Add Note / Diagnostics</label>
+            <textarea name="note" class="form-control" placeholder="Describe what was done, found, or next steps…"></textarea>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center;">Save Update</button>
+          </div>
+        </form>
+        <hr class="divider">
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="escalate">
+          <button type="submit" class="btn btn-danger" style="width:100%;justify-content:center;">
+            ⚠ Escalate to Supervisor
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if ticket.status in 'resolved closed' %}
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Technician Feedback</div>
+      </div>
+      <div style="padding:18px 20px;">
+        {% if ticket.rating %}
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div style="display:flex;gap:4px;">
+              {% for i in "12345"|make_list %}<svg width="18" height="18" viewBox="0 0 24 24" fill="{% if forloop.counter <= ticket.rating %}#fbbf24{% else %}#334155{% endif %}" stroke="{% if forloop.counter <= ticket.rating %}#fbbf24{% else %}#475569{% endif %}" stroke-width="1"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>{% endfor %}
+            </div>
+            <div style="font-size:13px;color:var(--text);font-style:italic;">"{{ ticket.feedback }}"</div>
+          </div>
+        {% elif user == ticket.submitted_by %}
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="submit_feedback">
+            <div class="form-group">
+              <label class="form-label">Rating (1-5)</label>
+              <div style="display:flex;gap:10px;">
+                {% for i in "12345"|make_list %}
+                <label style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;">
+                  <input type="radio" name="rating" value="{{ forloop.counter }}" required style="accent-color:var(--accent);">
+                  <span style="font-size:11px;font-weight:600;">{{ forloop.counter }}</span>
+                </label>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Your Feedback / Comments</label>
+              <textarea name="feedback" class="form-control" placeholder="Tell us about the technician's performance…" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-success" style="width:100%;justify-content:center;padding:10px;">Submit Feedback</button>
+          </form>
+        {% else %}
+          <div class="text-muted" style="font-size:13px;">Waiting for requester feedback.</div>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

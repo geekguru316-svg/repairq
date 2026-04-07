@@ -1,0 +1,67 @@
+{% extends 'tickets/base.html' %}
+{% block title %}New Ticket{% endblock %}
+{% block page_title %}Submit New Ticket{% endblock %}
+{% block topbar_actions %}<a class="btn btn-ghost" href="{% url 'ticket_list' %}">← Back</a>{% endblock %}
+{% block content %}
+<div style="max-width:620px;">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">New Repair Request</div>
+      <span class="card-sub">System will auto-generate ticket ID and set SLA deadline</span>
+    </div>
+    <div style="padding:22px;">
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+          <label class="form-label">Full Name * (Your Name)</label>
+          <input type="text" name="requester_name" class="form-control" placeholder="Enter your full name…" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Issue Title *</label>
+          <input type="text" name="title" class="form-control" placeholder="Brief description of the issue…" required>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Category *</label>
+            <select name="category" class="form-control" required>
+              {% for val, label in categories %}<option value="{{ val }}">{{ label }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Priority *</label>
+            <select name="priority" class="form-control" required>
+              {% for val, label in priorities %}<option value="{{ val }}" {% if val == 'medium' %}selected{% endif %}>{{ label }}</option>{% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Department / Asset Tag</label>
+          <input type="text" name="location" class="form-control" placeholder="Room number, device serial, asset tag…">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Detailed Description *</label>
+          <textarea name="description" class="form-control" placeholder="Describe the issue, impact, steps to reproduce…" required style="min-height:120px;"></textarea>
+        </div>
+        {% if user.is_superuser %}
+        <div class="form-group">
+          <label class="form-label">Assign To (optional — leave blank for auto-assign)</label>
+          <select name="assigned_to" class="form-control">
+            <option value="">Auto-assign to available technician</option>
+            {% for tech in technicians %}
+            <option value="{{ tech.id }}">{{ tech.name }} — {{ tech.open_ticket_count }} open tickets ({{ tech.get_availability_display }})</option>
+            {% endfor %}
+          </select>
+        </div>
+        {% endif %}
+        <div style="display:flex;gap:10px;justify-content:flex-end;padding-top:8px;border-top:1px solid var(--border);margin-top:4px;">
+          <a href="{% url 'ticket_list' %}" class="btn btn-ghost">Cancel</a>
+          <button type="submit" class="btn btn-primary">
+            <svg fill="none" viewBox="0 0 14 14" stroke="currentColor" stroke-width="2.5"><path d="M7 2v10M2 7h10"/></svg>
+            Submit Ticket
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

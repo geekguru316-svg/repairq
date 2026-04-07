@@ -1,0 +1,112 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ title }} | RepairQ Admin{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #2563eb;
+    --secondary: #1d2436;
+    --accent: #2563eb;
+    --primary-fg: #fff;
+    --body-fg: #e8ecf4;
+    --body-bg: #0f1117;
+    --body-quiet-color: #7d8fad;
+    --body-loud-color: #fff;
+    --header-color: #e8ecf4;
+    --header-bg: #161b25;
+    --header-link-color: #e8ecf4;
+    --breadcrumbs-fg: #7d8fad;
+    --breadcrumbs-bg: #1d2436;
+    --link-fg: #60a5fa;
+    --link-hover-color: #93c5fd;
+    --link-selected-fg: #fff;
+    --hairline-color: #2c3650;
+    --list-hairline-color: #2c3650;
+    --border-color: #2c3650;
+    --border2: #3a4660;
+    --darkened-bg: #161b25;
+    --selected-bg: rgba(37, 99, 235, 0.2);
+    --selected-row: rgba(37, 99, 235, 0.1);
+    --button-bg: #2563eb;
+    --button-hover-bg: #1d4ed8;
+    --default-button-bg: #1d2436;
+    --default-button-hover-bg: #242c3d;
+    --close-button-bg: #2c3650;
+    --delete-button-bg: #dc2626;
+    --delete-button-hover-bg: #b91c1c;
+  }
+
+  body { font-family: 'Barlow', sans-serif !important; background: var(--body-bg) !important; color: var(--body-fg) !important; }
+  h1, h2, h3, .module h2, #header h1 a, .caption { font-family: 'Barlow Condensed', sans-serif !important; font-weight: 700 !important; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  #header { background: var(--header-bg) !important; border-bottom: 1px solid var(--border-color) !important; padding: 12px 24px !important; color: var(--header-color) !important; }
+  #header a:link, #header a:visited { color: var(--header-link-color) !important; }
+  #branding h1 { font-size: 20px !important; margin: 0 !important; color: var(--header-color) !important; }
+  
+  .module { background: var(--bg2) !important; border: 1px solid var(--border-color) !important; border-radius: 10px !important; overflow: hidden; margin-bottom: 20px !important; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2) !important; }
+  .module h2, .module caption { background: var(--bg3) !important; color: var(--body-fg) !important; border-bottom: 1px solid var(--border-color) !important; font-size: 13px !important; padding: 10px 15px !important; }
+  
+  table thead th { background: var(--bg3) !important; color: var(--body-quiet-color) !important; font-size: 10px !important; font-weight: 700 !important; text-transform: uppercase; letter-spacing: 1px !important; padding: 12px 15px !important; border-bottom: 1px solid var(--border-color) !important; }
+  table tbody tr { border-bottom: 1px solid var(--border-color) !important; transition: background 0.2s; background: transparent !important; }
+  table tbody tr:hover { background: var(--bg4) !important; }
+  table tbody td, table tbody th { padding: 12px 15px !important; color: var(--body-fg) !important; font-size: 13px !important; border-bottom: 1px solid var(--border-color) !important; }
+  
+  input[type=text], input[type=password], input[type=email], input[type=url], input[type=number], input[type=tel], textarea, select {
+    background: var(--bg3) !important; border: 1px solid var(--border2) !important; border-radius: 6px !important; color: var(--body-fg) !important; padding: 8px 12px !important; outline: none !important;
+  }
+  input[type=text]:focus, textarea:focus, select:focus { border-color: var(--primary) !important; }
+  
+  .button, input[type=submit], input[type=button], .submit-row input, a.button {
+    background: var(--button-bg) !important; border: none !important; border-radius: 6px !important; padding: 8px 18px !important; font-size: 12px !important; font-weight: 700 !important; text-transform: uppercase !important; letter-spacing: 0.5px !important; color: #fff !important; cursor: pointer !important; transition: all 0.2s !important;
+  }
+  .button:hover, input[type=submit]:hover { background: var(--button-hover-bg) !important; transform: translateY(-1px); }
+  .button.default, input[type=submit].default { background: var(--primary) !important; box-shadow: 0 0 10px rgba(37, 99, 235, 0.3) !important; }
+  
+  #content { padding: 24px !important; background: var(--body-bg) !important; }
+  .breadcrumbs { background: var(--bg3) !important; border-bottom: 1px solid var(--border-color) !important; padding: 10px 24px !important; font-size: 11px !important; color: var(--body-quiet-color) !important; }
+  .breadcrumbs a { color: var(--primary) !important; font-weight: 600 !important; }
+  
+  #nav-sidebar { background: var(--bg2) !important; border-right: 1px solid var(--border-color) !important; }
+  #nav-sidebar .module { margin: 0 !important; border: none !important; border-radius: 0 !important; box-shadow: none !important; }
+  #nav-sidebar .module th { background: transparent !important; border: none !important; padding: 8px 15px !important; }
+  #nav-sidebar table { width: 100% !important; }
+  #nav-sidebar tr:hover { background: var(--bg3) !important; }
+  #nav-sidebar .current-model { background: var(--selected-bg) !important; border-left: 4px solid var(--primary) !important; }
+  #nav-sidebar .current-model a { color: var(--primary) !important; font-weight: 700 !important; }
+  
+  .form-row { border-bottom: 1px solid var(--hairline-color) !important; padding: 18px 0 !important; }
+  .aligned label { color: var(--body-quiet-color) !important; font-weight: 700 !important; text-transform: uppercase; font-size: 10px !important; letter-spacing: 0.8px; margin-top: 4px !important; }
+  .aligned .help, .help-block { font-size: 11px !important; color: var(--muted) !important; margin-top: 6px !important; }
+
+  /* Object tools (History, View on site buttons) */
+  .object-tools { margin: 0 0 20px 0 !important; }
+  .object-tools a { background: var(--bg3) !important; border: 1px solid var(--border-color) !important; color: var(--body-fg) !important; border-radius: 6px !important; padding: 6px 12px !important; font-size: 11px !important; font-weight: 600 !important; }
+  .object-tools a:hover { background: var(--bg4) !important; }
+
+  /* Dashboard Index specific */
+  #content-main .module table th a { color: var(--body-fg) !important; font-weight: 600 !important; }
+  .dashboard .module table th { width: 100% !important; }
+  .dashboard .module table td { white-space: nowrap !important; }
+
+  /* Dark mode toggle override (Django 4.x+) */
+  #header #account-nav button { background: var(--bg4) !important; border: 1px solid var(--border2) !important; border-radius: 50% !important; height: 32px !important; width: 32px !important; display: flex !important; align-items: center !important; justify-content: center !important; }
+</style>
+{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div style="width:32px;height:32px;background:#2563eb;border-radius:8px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 15px rgba(37,99,235,0.4);">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#fff" stroke-width="2.5">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+    </div>
+    <span style="font-family:'Barlow Condensed', sans-serif; letter-spacing:1px;">REPAIRQ <span style="color:var(--primary); font-weight:800;">ADMIN</span></span>
+  </div>
+</h1>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}

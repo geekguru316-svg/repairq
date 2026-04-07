@@ -1,0 +1,71 @@
+{% extends 'tickets/base.html' %}
+{% block title %}Assignments{% endblock %}
+{% block page_title %}Assignments{% endblock %}
+{% block content %}
+{% if unassigned %}
+<div class="alert alert-info">
+  <svg fill="none" viewBox="0 0 16 16" stroke="currentColor" stroke-width="2"><circle cx="8" cy="8" r="7"/><path d="M8 7v4M8 5h.01"/></svg>
+  <strong>{{ unassigned.count }} unassigned ticket{{ unassigned.count|pluralize }}</strong> require manual technician assignment.
+</div>
+{% else %}
+<div class="alert alert-success">
+  <svg fill="none" viewBox="0 0 16 16" stroke="currentColor" stroke-width="2"><circle cx="8" cy="8" r="7"/><path d="M5 8l2 2 4-4"/></svg>
+  All tickets are currently assigned. 
+</div>
+{% endif %}
+
+<div class="card mb-20">
+  <div class="card-header"><div class="card-title">Unassigned Tickets</div></div>
+  <table class="tbl">
+    <thead><tr><th>Ticket</th><th>Title</th><th>Priority</th><th>Category</th><th>Waiting</th><th>Assign To</th><th></th></tr></thead>
+    <tbody>
+      {% for ticket in unassigned %}
+      <tr>
+        <td class="text-mono text-muted" style="font-size:12px;">{{ ticket.ticket_id }}</td>
+        <td><a href="{% url 'ticket_detail' ticket.ticket_id %}" style="color:var(--text);font-weight:500;">{{ ticket.title|truncatechars:40 }}</a></td>
+        <td><span class="pri pri-{{ ticket.priority }}">{{ ticket.priority|upper }}</span></td>
+        <td style="text-transform:capitalize;">{{ ticket.category }}</td>
+        <td class="text-muted">{{ ticket.created_at|timesince }}</td>
+        <td>
+          <form method="post" style="display:inline;">
+            {% csrf_token %}
+            <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
+            <select name="technician_id" class="filter-select" style="min-width:180px;">
+              <option value="">Select technician…</option>
+              {% for tech in technicians %}
+              <option value="{{ tech.id }}">{{ tech.name }} ({{ tech.open_ticket_count }} open)</option>
+              {% endfor %}
+            </select>
+        </td>
+        <td>
+            <button type="submit" class="btn btn-success" style="padding:5px 12px;">Assign</button>
+          </form>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="7" class="text-muted" style="text-align:center;padding:24px;">No unassigned tickets.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <div class="card-header"><div class="card-title">Technician Workload</div><span class="card-sub">Max recommended: 10 tickets</span></div>
+  <div style="padding:18px 20px;">
+    {% for tech in technicians %}
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+      <div style="width:110px;text-align:right;font-size:12px;color:var(--muted);flex-shrink:0;">{{ tech.name }}</div>
+      <div style="flex:1;background:var(--bg3);border-radius:3px;height:22px;overflow:hidden;">
+        {% with pct=tech.open_ticket_count|floatformat:0 %}
+        <div style="width:{% widthratio tech.open_ticket_count 10 100 %}%;height:100%;background:{% if tech.open_ticket_count >= 9 %}var(--r){% elif tech.open_ticket_count >= 6 %}var(--o){% else %}var(--g){% endif %};border-radius:3px;display:flex;align-items:center;padding-left:8px;min-width:32px;">
+          <span style="font-size:11px;font-weight:700;color:rgba(255,255,255,.9);font-family:var(--mono);">{{ tech.open_ticket_count }}</span>
+        </div>
+        {% endwith %}
+      </div>
+      <div class="avail-dot avail-{{ tech.availability }}"></div>
+      <span style="font-size:11px;color:var(--muted);width:55px;">{{ tech.get_availability_display }}</span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

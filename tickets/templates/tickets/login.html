@@ -1,0 +1,126 @@
+{% extends 'tickets/base.html' %}
+{% block auth_content %}
+<style>
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: radial-gradient(circle at top right, var(--bg4), var(--bg));
+    padding: 20px;
+  }
+
+  .login-box {
+    width: 400px;
+    background: var(--glass);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    transition: transform 0.3s ease;
+  }
+
+  .login-box:hover {
+    transform: translateY(-4px);
+  }
+
+  .login-head {
+    padding: 40px 40px 24px;
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+  }
+
+  .login-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .login-title {
+    font-family: var(--head);
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--text);
+  }
+
+  .login-sub {
+    font-size: 14px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .login-body {
+    padding: 32px 40px;
+  }
+
+  .login-foot {
+    padding: 20px 40px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--muted);
+    text-align: center;
+    background: rgba(0, 0, 0, 0.1);
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    padding: 12px !important;
+    font-size: 14px !important;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+  }
+</style>
+<div class="login-box">
+  <div class="login-head">
+    <div class="login-logo">
+      <div
+        style="width:36px;height:36px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;">
+        <svg width="20" height="20" fill="none" viewBox="0 0 18 18" stroke="#fff" stroke-width="2"
+          stroke-linecap="round">
+          <path d="M9 2L2 6v6l7 4 7-4V6L9 2z" />
+          <path d="M9 2v16M2 6l7 4 7-4" />
+        </svg>
+      </div>
+      <div>
+        <div class="login-title">RepairQ</div>
+        <div style="font-size:10px;color:var(--muted);font-family:var(--mono);">IT Repair Queuing System</div>
+      </div>
+    </div>
+    <div class="login-sub">Sign in to access the dashboard</div>
+  </div>
+  <div class="login-body">
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert alert-danger" style="margin-bottom:16px;">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <input type="text" name="username" class="form-control" placeholder="Enter username" autofocus required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" name="password" class="form-control" placeholder="Enter password" required>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:10px;">
+        Sign In →
+      </button>
+    </form>
+  </div>
+  <div class="login-foot">
+    <div style="margin-bottom:8px;">Demo credentials: <span style="font-family:var(--mono);color:var(--text);">user1 / user1</span></div>
+    <a href="{% url 'index' %}" style="color:var(--muted);text-decoration:none;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:1px;">← Back to Queue</a>
+  </div>
+</div>
+{% endblock %}

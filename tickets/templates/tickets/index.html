@@ -1,0 +1,1015 @@
+{% load static %}
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tech Support Desk — RepairQ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="icon" type="image/png" href="{% static 'tickets/img/favicon.png' %}">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* ── Dark Mode Variables ── */
+    :root {
+      --bg-page: #f9fafb;
+      --bg-card: #ffffff;
+      --bg-input: #f9fafb;
+      --bg-input-focus: #ffffff;
+      --bg-row-hover: rgba(249, 250, 251, 0.7);
+      --border: #e5e7eb;
+      --border-soft: #f3f4f6;
+      --text-primary: #111827;
+      --text-secondary: #6b7280;
+      --text-muted: #9ca3af;
+      --text-label: #6b7280;
+      --header-from: #0f172a;
+      --header-via: #1e3a5f;
+      --header-to: #0f172a;
+      --badge-bg: rgba(59, 130, 246, 0.15);
+      --badge-border: rgba(96, 165, 250, 0.3);
+      --badge-text: #93c5fd;
+      --pri-num-first: #854d0e;
+      --pri-num-first-bg: #fef3c7;
+      --pri-num-bg: #eff6ff;
+      --pri-num-text: #1d4ed8;
+      --info-strip: #9ca3af;
+      --footer-border: #f3f4f6;
+      --toast-bg: #ffffff;
+      --toast-border: #bbf7d0;
+      --toast-title: #111827;
+      --toast-body: #6b7280;
+      --input-ring: #3b82f6;
+    }
+
+    body.dark {
+      --bg-page: #0b0e14;
+      --bg-card: #151923;
+      --bg-input: #1e2433;
+      --bg-input-focus: #1e2433;
+      --bg-row-hover: rgba(30, 36, 51, 0.8);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-soft: rgba(255, 255, 255, 0.04);
+      --text-primary: #f0f4f8;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --text-label: #94a3b8;
+      --header-from: #070a10;
+      --header-via: #0a1628;
+      --header-to: #070a10;
+      --badge-bg: rgba(59, 130, 246, 0.12);
+      --badge-border: rgba(96, 165, 250, 0.2);
+      --badge-text: #60a5fa;
+      --pri-num-first-bg: #422006;
+      --pri-num-first: #fbbf24;
+      --pri-num-bg: #1e3a5f;
+      --pri-num-text: #93c5fd;
+      --info-strip: #475569;
+      --footer-border: rgba(255, 255, 255, 0.06);
+      --toast-bg: #1e2433;
+      --toast-border: #166534;
+      --toast-title: #f0f4f8;
+      --toast-body: #94a3b8;
+      --input-ring: #3b82f6;
+    }
+
+    /* Apply variables */
+    body {
+      background-color: var(--bg-page);
+      color: var(--text-primary);
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-soft);
+    }
+
+    .card-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-label);
+    }
+
+    .text-p {
+      color: var(--text-primary);
+    }
+
+    .text-s {
+      color: var(--text-secondary);
+    }
+
+    .text-m {
+      color: var(--text-muted);
+    }
+
+    .text-l {
+      color: var(--text-label);
+    }
+
+    .rq-input {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 16px;
+      font-size: 14px;
+      color: var(--text-primary);
+      background: var(--bg-input);
+      outline: none;
+      transition: all 0.2s;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .rq-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .rq-input:focus {
+      background: var(--bg-input-focus);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+      border-color: #3b82f6;
+    }
+
+    select.rq-input {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+      background-position: right 0.5rem center;
+      background-repeat: no-repeat;
+      background-size: 1.5em 1.5em;
+      padding-right: 2.5rem;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+    }
+
+    .rq-row-hover:hover {
+      background: var(--bg-row-hover);
+    }
+
+    /* Dark‑mode option text fix */
+    body.dark select option {
+      background: #1e2433;
+      color: #f0f4f8;
+    }
+
+    /* Animations */
+    .pulse-dot {
+      animation: pulse-glow 2s infinite;
+    }
+
+    @keyframes pulse-glow {
+
+      0%,
+      100% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+      }
+
+      50% {
+        box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+      }
+    }
+
+    .fade-in {
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Theme toggle button */
+    .theme-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #94a3b8;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 99px;
+      padding: 6px 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .theme-btn:hover {
+      color: #e2e8f0;
+      background: rgba(255, 255, 255, 0.14);
+    }
+
+    /* Priority chips */
+    .pri-critical {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .pri-high {
+      background: #ffedd5;
+      color: #c2410c;
+    }
+
+    .pri-low {
+      background: #f3f4f6;
+      color: #6b7280;
+    }
+
+    .pri-medium {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    body.dark .pri-critical {
+      background: #3f1212;
+      color: #f87171;
+    }
+
+    body.dark .pri-high {
+      background: #3a1a09;
+      color: #fb923c;
+    }
+
+    body.dark .pri-low {
+      background: #1e2433;
+      color: #64748b;
+    }
+
+    body.dark .pri-medium {
+      background: #1e3a5f;
+      color: #60a5fa;
+    }
+
+    .msg-success {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      color: #166534;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    body.dark .msg-success {
+      background: #052e16;
+      border-color: #166534;
+      color: #4ade80;
+    }
+
+    /* Tag pill */
+    .tag-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      padding: 4px 10px;
+      border-radius: 8px;
+    }
+
+    /* Toast */
+    #toast {
+      background: var(--toast-bg);
+      border-color: var(--toast-border);
+    }
+
+    #toast-title {
+      color: var(--toast-title);
+    }
+
+    #toast-body {
+      color: var(--toast-body);
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+  </style>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: { extend: { colors: { brand: { 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8' } } } }
+    }
+      // Restore theme immediately to prevent flash
+      (function () {
+        if (localStorage.getItem('rq_theme') === 'dark') {
+          document.documentElement.classList.add('dark-ready');
+        }
+      })();
+  </script>
+</head>
+
+<body class="min-h-screen">
+
+  <!-- ── HEADER ── -->
+  <header
+    style="background: linear-gradient(to right, var(--header-from), var(--header-via), var(--header-to)); color: white;">
+    <div class="max-w-7xl mx-auto px-6 py-8">
+      <div class="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <div
+            class="inline-flex items-center gap-2 px-3 py-1 rounded-full mb-3 text-xs font-bold uppercase tracking-widest"
+            style="background:var(--badge-bg); border:1px solid var(--badge-border); color:var(--badge-text);">
+            <span class="w-2 h-2 bg-green-400 rounded-full pulse-dot"></span>
+            Queue is Live
+          </div>
+          <h1 class="text-3xl font-extrabold tracking-tight text-white">Tech Support Desk</h1>
+          <p class="text-sm mt-1" style="color:#94a3b8;">Submit your repair request and track your position in
+            real-time.</p>
+        </div>
+        <div class="flex items-center gap-4 flex-wrap">
+          <div id="live-stats" class="flex items-center gap-4">
+            <div class="text-center">
+              <div class="text-2xl font-bold text-white" id="hdr-waiting">—</div>
+              <div class="text-xs" style="color:#94a3b8;">Waiting</div>
+            </div>
+            <div style="width:1px;height:40px;background:#334155;"></div>
+            <div class="text-center">
+              <div class="text-2xl font-bold text-green-400" id="hdr-serving">—</div>
+              <div class="text-xs" style="color:#94a3b8;">Serving</div>
+            </div>
+          </div>
+          <!-- Theme Toggle -->
+          <button id="theme-btn" class="theme-btn" onclick="toggleTheme()">
+            <svg id="icon-moon" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+              stroke-width="2">
+              <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+            </svg>
+            <svg id="icon-sun" class="w-3.5 h-3.5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+              stroke-width="2">
+              <circle cx="12" cy="12" r="5" />
+              <path
+                d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+            </svg>
+            <span id="theme-label">Dark Mode</span>
+          </button>
+          <a href="{% url 'login' %}" class="text-xs font-medium transition" style="color:#64748b;"
+            onmouseover="this.style.color='#cbd5e1'" onmouseout="this.style.color='#64748b'">
+            Technician Login →
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Django Messages ── -->
+  {% if messages %}
+  <div class="max-w-7xl mx-auto px-6 pt-4">
+    {% for msg in messages %}
+    <div class="msg-success fade-in">
+      <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <path d="M5 13l4 4L19 7" />
+      </svg>
+      {{ msg }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ── MAIN ── -->
+  <main class="max-w-7xl mx-auto px-6 py-8">
+    <div style="display:grid; grid-template-columns:1fr; gap:24px;">
+      <div style="display:grid; grid-template-columns:2fr 3fr; gap:24px;" class="lg-grid">
+
+        <!-- ════ LEFT: Queue Status ════ -->
+        <div style="display:flex; flex-direction:column; gap:20px;">
+
+          <!-- Now Serving -->
+          <div class="card">
+            <div class="card-header">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <div class="w-2 h-2 bg-blue-500 rounded-full pulse-dot"
+                  style="animation-delay:.5s;width:8px;height:8px;background:#3b82f6;border-radius:50%;"></div>
+                <span class="card-label">Now Serving</span>
+              </div>
+              <span id="serving-badge-wrap"></span>
+            </div>
+            <div style="padding:20px;" id="serving-panel">
+              {% if now_serving %}
+              <div class="fade-in">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+                  <div>
+                    <div style="font-size:18px;font-weight:700;" class="text-p">{{ now_serving.requester_name }}</div>
+                    <div style="font-size:14px;margin-top:2px;" class="text-s">{{ now_serving.title }}</div>
+                  </div>
+                  <span
+                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold pri-{% if now_serving.priority == 'critical' %}critical{% elif now_serving.priority == 'high' %}high{% elif now_serving.priority == 'low' %}low{% else %}medium{% endif %}">
+                    {{ now_serving.get_priority_display }}
+                  </span>
+                </div>
+                <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;">
+                  <span class="tag-pill">
+                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <rect x="2" y="3" width="20" height="14" rx="2" />
+                      <path d="M8 21h8M12 17v4" />
+                    </svg>
+                    {{ now_serving.get_category_display }}
+                  </span>
+                  {% if now_serving.location %}
+                  <span class="tag-pill">
+                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    </svg>
+                    {{ now_serving.location }}
+                  </span>
+                  {% endif %}
+                  <span class="tag-pill" style="font-family:monospace;">{{ now_serving.ticket_id }}</span>
+                </div>
+                <div style="margin-top:12px;">
+                  <span
+                    style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#dbeafe;color:#1d4ed8;font-size:12px;font-weight:700;border-radius:99px;border:1px solid #bfdbfe;">
+                    <span style="width:6px;height:6px;background:#3b82f6;border-radius:50%;"></span>
+                    In Progress
+                  </span>
+                </div>
+              </div>
+              {% else %}
+              <div class="fade-in" id="empty-serve-panel">
+                <div style="text-align:center;padding:12px 0 8px;">
+                  <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;"
+                    class="text-m">🎬 While You Wait</span>
+                </div>
+                <div style="position:relative;width:100%;border-radius:12px;overflow:hidden;aspect-ratio:16/9;">
+                  <video id="idle-video" style="width:100%;height:100%;object-fit:cover;border-radius:12px;" autoplay
+                    muted loop playsinline>
+                    <source src="{% static 'tickets/videos/idle.mp4' %}" type="video/mp4">
+                  </video>
+                </div>
+                <div style="text-align:center;margin-top:8px;font-size:12px;" class="text-m">How does the Internet work?
+                </div>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- People Waiting -->
+          <div class="card" style="flex:1;">
+            <div class="card-header">
+              <span class="card-label">People Waiting</span>
+              <span
+                style="background:#2563eb;color:white;font-size:12px;font-weight:700;padding:4px 10px;border-radius:99px;"
+                id="wait-badge">
+                {{ waiting_count }} waiting
+              </span>
+            </div>
+            <div id="waiting-list">
+              {% if waiting %}
+              {% for t in waiting %}
+              <div class="rq-row-hover"
+                style="display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--border-soft);transition:background 0.15s;"
+                id="qrow-{{ t.ticket_id }}">
+                <div
+                  style="width:28px;height:28px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;
+                  {% if forloop.first %}background:var(--pri-num-first-bg);color:var(--pri-num-first);{% else %}background:var(--pri-num-bg);color:var(--pri-num-text);{% endif %}">
+                  {{ forloop.counter }}
+                </div>
+                <div style="flex:1;min-width:0;">
+                  <div style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
+                    class="text-p">{{ t.requester_name }}</div>
+                  <div style="font-size:12px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
+                    class="text-m">{{ t.title }} · {{ t.get_category_display }}</div>
+                </div>
+                <span style="flex-shrink:0;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;"
+                  class="pri-{% if t.priority == 'critical' %}critical{% elif t.priority == 'high' %}high{% elif t.priority == 'low' %}low{% else %}medium{% endif %}">
+                  {{ t.get_priority_display }}
+                </span>
+              </div>
+              {% endfor %}
+              {% else %}
+              <div style="text-align:center;padding:48px 20px;" class="text-m" id="empty-queue">
+                <svg style="width:40px;height:40px;margin:0 auto 12px;opacity:0.2;" fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor" stroke-width="1.5">
+                  <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M23 21v-2a4 4 0 00-3-3.87m-4-12a4 4 0 010 7.75" />
+                </svg>
+                <div style="font-size:14px;font-weight:500;">No one waiting</div>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ════ RIGHT: Submit Form ════ -->
+        <div>
+
+          <!-- Position Tracker -->
+          <div id="pos-tracker" style="display:none;margin-bottom:20px;" class="card fade-in">
+            <div style="padding:20px;display:flex;align-items:center;gap:16px;">
+              <div
+                style="width:56px;height:56px;background:#2563eb;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <span style="color:white;font-size:24px;font-weight:900;" id="pos-num">—</span>
+              </div>
+              <div>
+                <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;"
+                  class="text-m">Your Queue Position</div>
+                <div style="font-size:14px;font-weight:600;margin-top:2px;" class="text-p" id="pos-sub">Calculating...
+                </div>
+                <div style="font-size:12px;font-family:monospace;color:#3b82f6;margin-top:4px;" id="pos-ticket"></div>
+              </div>
+              <button id="btn-leave"
+                style="margin-left:auto;font-size:12px;font-weight:600;color:#ef4444;border:1px solid #fecaca;border-radius:8px;padding:6px 12px;background:transparent;cursor:pointer;transition:all 0.2s;"
+                onmouseover="this.style.borderColor='#f87171'" onmouseout="this.style.borderColor='#fecaca'">
+                Leave Queue
+              </button>
+            </div>
+          </div>
+
+          <!-- Form Card -->
+          <div class="card" id="form-card">
+            <div class="card-header">
+              <div>
+                <div style="font-size:15px;font-weight:700;" class="text-p">Submit Repair Request</div>
+                <div style="font-size:12px;margin-top:2px;" class="text-m">System will auto-generate a Ticket ID</div>
+              </div>
+              <div
+                style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#2563eb;background:#dbeafe;padding:6px 12px;border-radius:99px;">
+                <svg style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                  stroke-width="2.5">
+                  <path d="M12 4v16m8-8H4" />
+                </svg>
+                New Ticket
+              </div>
+            </div>
+
+            <!-- Join Form -->
+            <div id="form-view" style="padding:24px;">
+              <form id="join-form">
+                {% csrf_token %}
+
+                <!-- Row 1: Name + Department -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+                  <div>
+                    <label
+                      style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;"
+                      class="text-l">
+                      Full Name <span style="color:#f87171;">*</span>
+                    </label>
+                    <input type="text" name="requester_name" id="inp-name" required placeholder="e.g. Maria Santos"
+                      class="rq-input">
+                  </div>
+                  <div>
+                    <label
+                      style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;"
+                      class="text-l">Department</label>
+                    <select name="location" id="inp-dept" class="rq-input">
+                      <option value="">Select department...</option>
+                      <option value="Accounting">Accounting</option>
+                      <option value="Admin">Admin</option>
+                      <option value="Cashier">Cashier</option>
+                      <option value="CGAS">CGAS</option>
+                      <option value="GSU">GSU</option>
+                      <option value="Leave">Leave</option>
+                      <option value="Legal | Fraud">Legal | Fraud</option>
+                      <option value="Local">Local</option>
+                      <option value="National">National</option>
+                      <option value="Training">Training</option>
+                      <option value="ORD | ARD | MATU">ORD | ARD | MATU</option>
+                      <option value="Technical">Technical</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Row 2: Device Type + Priority -->
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+                  <div>
+                    <label
+                      style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;"
+                      class="text-l">
+                      Device Type <span style="color:#f87171;">*</span>
+                    </label>
+                    <select name="category" id="inp-cat" required class="rq-input">
+                      <option value="">Select device...</option>
+                      <option value="hardware">Laptop / Desktop</option>
+                      <option value="software">Software / App</option>
+                      <option value="network">Network / WiFi</option>
+                      <option value="security">Security / Password</option>
+                      <option value="telephone">Telephone</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label
+                      style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;"
+                      class="text-l">Priority</label>
+                    <select name="priority" id="inp-pri" class="rq-input">
+                      <option value="low">Low — Not urgent</option>
+                      <option value="medium" selected>Medium — Normal</option>
+                      <option value="high">High — Urgent</option>
+                      <option value="critical">Critical — ASAP</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Row 3: Issue Title -->
+                <div style="margin-bottom:16px;">
+                  <label
+                    style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;"
+                    class="text-l">
+                    Issue Title <span style="color:#f87171;">*</span>
+                  </label>
+                  <input type="text" name="title" id="inp-title" required
+                    placeholder="e.g. Laptop won't turn on, Can't connect to WiFi..." class="rq-input">
+                </div>
+
+                <!-- Row 4: Location / Asset Tag -->
+                <div style="margin-bottom:16px;">
+                  <label
+                    style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;"
+                    class="text-l">Asset Tag / Room No.</label>
+                  <input type="text" name="asset_tag" id="inp-asset"
+                    placeholder="e.g. Room 204, SN-2023-0041, Floor 3..." class="rq-input">
+                </div>
+
+                <!-- Row 5: Description -->
+                <div style="margin-bottom:24px;">
+                  <label
+                    style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;"
+                    class="text-l">
+                    Detailed Description <span style="color:#f87171;">*</span>
+                  </label>
+                  <textarea name="description" id="inp-desc" required rows="4"
+                    placeholder="Describe the issue in detail — what happened, when it started, steps you've tried..."
+                    class="rq-input" style="resize:none;min-height:110px;"></textarea>
+                </div>
+
+                <!-- Submit row -->
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+                  <p style="font-size:12px;" class="text-m">Fields marked <span
+                      style="color:#f87171;font-weight:700;">*</span> are required</p>
+                  <button type="submit" id="join-btn"
+                    style="display:inline-flex;align-items:center;gap:8px;background:#2563eb;color:white;font-size:14px;font-weight:700;padding:10px 24px;border-radius:12px;border:none;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 12px rgba(37,99,235,0.3);"
+                    onmouseover="this.style.background='#1d4ed8'" onmouseout="this.style.background='#2563eb'">
+                    <svg style="width:16px;height:16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                      stroke-width="2.5">
+                      <path d="M12 4v16m8-8H4" />
+                    </svg>
+                    Submit Ticket
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Confirmation -->
+            <div id="confirm-view" style="display:none;padding:24px;" class="fade-in">
+              <div style="text-align:center;padding:16px 0;">
+                <div
+                  style="width:64px;height:64px;background:#dcfce7;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+                  <svg style="width:32px;height:32px;color:#16a34a;" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2.5">
+                    <path d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <div style="font-size:18px;font-weight:700;" class="text-p">You're in the queue!</div>
+                <p style="font-size:14px;margin-top:4px;margin-bottom:16px;" class="text-s">Your repair request has been
+                  submitted successfully.</p>
+                <div
+                  style="display:inline-block;background:var(--bg-input);border:1px solid var(--border);border-radius:12px;padding:12px 20px;margin-bottom:16px;">
+                  <div
+                    style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:#3b82f6;margin-bottom:4px;">
+                    Ticket ID</div>
+                  <div style="font-size:20px;font-weight:900;color:#1d4ed8;font-family:monospace;" id="conf-ticket-id">—
+                  </div>
+                </div>
+                <div style="font-size:14px;" class="text-s" id="conf-pos-text"></div>
+              </div>
+              <div style="margin-top:16px;display:flex;gap:12px;">
+                <button id="btn-rejoin"
+                  style="flex:1;border:1px solid var(--border);color:var(--text-primary);font-weight:600;font-size:14px;padding:10px;border-radius:12px;background:transparent;cursor:pointer;transition:all 0.2s;">
+                  Submit Another
+                </button>
+                <button id="btn-leave2"
+                  style="flex:1;border:1px solid #fecaca;color:#ef4444;font-weight:600;font-size:14px;padding:10px;border-radius:12px;background:transparent;cursor:pointer;transition:all 0.2s;">
+                  Leave Queue
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Info strip -->
+          <div
+            style="margin-top:16px;display:flex;flex-wrap:wrap;align-items:center;gap:16px 24px;font-size:12px;padding:0 4px;color:var(--info-strip);">
+            <div style="display:flex;align-items:center;gap:6px;"><span
+                style="width:8px;height:8px;border-radius:50%;background:#3b82f6;"></span>Ticket IDs auto-generated
+              (e.g. TKT-20260406-0001)</div>
+            <div style="display:flex;align-items:center;gap:6px;"><span
+                style="width:8px;height:8px;border-radius:50%;background:#4ade80;"></span>Queue updates every 5 seconds
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;"><span
+                style="width:8px;height:8px;border-radius:50%;background:#fbbf24;"></span>SLA tracked automatically by
+              priority</div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer
+    style="max-width:80rem;margin:0 auto;padding:32px 24px;text-align:center;border-top:1px solid var(--footer-border);font-size:12px;color:var(--text-muted);">
+    &copy; Maintained by the Regional Information Technology Unit, Commission on Audit Region VII | All Rights Reserved
+  </footer>
+
+  <!-- Notification Toast -->
+  <div id="toast"
+    style="position:fixed;bottom:24px;right:24px;border:1px solid;border-radius:16px;box-shadow:0 20px 25px -5px rgba(0,0,0,0.15);padding:16px 20px;max-width:360px;display:none;z-index:50;"
+    class="fade-in">
+    <div style="display:flex;align-items:flex-start;gap:12px;">
+      <div
+        style="width:36px;height:36px;background:#dcfce7;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg style="width:16px;height:16px;color:#16a34a;" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+          stroke-width="2.5">
+          <path d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+      <div>
+        <div style="font-size:14px;font-weight:700;" id="toast-title">Notification</div>
+        <div style="font-size:12px;margin-top:2px;" id="toast-body"></div>
+      </div>
+      <button onclick="document.getElementById('toast').style.display='none'"
+        style="margin-left:auto;color:var(--text-muted);background:none;border:none;cursor:pointer;font-size:16px;line-height:1;">✕</button>
+    </div>
+  </div>
+
+  <script>
+    // ── Theme ─────────────────────────────────────────────────
+    function applyTheme(dark) {
+      document.body.classList.toggle('dark', dark);
+      document.getElementById('theme-label').textContent = dark ? 'Light Mode' : 'Dark Mode';
+      document.getElementById('icon-moon').classList.toggle('hidden', dark);
+      document.getElementById('icon-sun').classList.toggle('hidden', !dark);
+      localStorage.setItem('rq_theme', dark ? 'dark' : 'light');
+    }
+    function toggleTheme() {
+      applyTheme(!document.body.classList.contains('dark'));
+    }
+    // Init
+    applyTheme(localStorage.getItem('rq_theme') === 'dark');
+
+    // ── App ───────────────────────────────────────────────────
+    (function () {
+      const CSRF = document.querySelector('[name=csrfmiddlewaretoken]').value;
+      let myTicketId = localStorage.getItem('rq_ticket');
+      let lastServingId = "{% if now_serving %}{{ now_serving.ticket_id }}{% else %}__idle__{% endif %}";
+      let lastWaitingHash = "{% for t in waiting %}{{ t.ticket_id }}{% if not forloop.last %},{% endif %}{% endfor %}";
+
+      function showToast(title, body, duration = 5000) {
+        document.getElementById('toast-title').textContent = title;
+        document.getElementById('toast-body').textContent = body;
+        const t = document.getElementById('toast');
+        t.style.display = 'block';
+        setTimeout(() => t.style.display = 'none', duration);
+      }
+
+      function priClass(p) {
+        if (p === 'critical') return 'pri-critical';
+        if (p === 'high') return 'pri-high';
+        if (p === 'low') return 'pri-low';
+        return 'pri-medium';
+      }
+      function priLabel(p) {
+        return { critical: 'Critical', high: 'High', medium: 'Medium', low: 'Low' }[p] || p;
+      }
+
+      function renderServing(s) {
+        const sId = s ? s.ticket_id : '__idle__';
+        if (sId === lastServingId) return;
+        lastServingId = sId;
+
+        const el = document.getElementById('serving-panel');
+        document.getElementById('hdr-serving').textContent = s ? '1' : '0';
+        if (!s) {
+          el.innerHTML = `<div class="fade-in">
+            <div style="text-align:center;padding:12px 0 8px;"><span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);">🎬 While You Wait</span></div>
+            <div style="position:relative;width:100%;border-radius:12px;overflow:hidden;aspect-ratio:16/9;">
+              <video style="width:100%;height:100%;object-fit:cover;border-radius:12px;" autoplay muted loop playsinline>
+                <source src="/static/tickets/videos/idle.mp4" type="video/mp4">
+              </video>
+            </div>
+            <div style="text-align:center;margin-top:8px;font-size:12px;color:var(--text-muted);">How does the Internet work?</div>
+          </div>`;
+          return;
+        }
+        el.innerHTML = `<div class="fade-in">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+            <div>
+              <div style="font-size:18px;font-weight:700;color:var(--text-primary);">${s.name}</div>
+              <div style="font-size:14px;margin-top:2px;color:var(--text-secondary);">${s.title || ''}</div>
+            </div>
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${priClass(s.priority)}" style="padding:4px 10px;border-radius:99px;font-size:12px;font-weight:700;">${priLabel(s.priority)}</span>
+          </div>
+          <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;">
+            <span class="tag-pill"><svg style="width:12px;height:12px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>${s.category}</span>
+            ${s.dept ? `<span class="tag-pill">📍 ${s.dept}</span>` : ''}
+            <span class="tag-pill" style="font-family:monospace;">${s.ticket_id}</span>
+          </div>
+          <div style="margin-top:12px;">
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#dbeafe;color:#1d4ed8;font-size:12px;font-weight:700;border-radius:99px;border:1px solid #bfdbfe;">
+              <span style="width:6px;height:6px;background:#3b82f6;border-radius:50%;"></span>In Progress
+            </span>
+          </div>
+        </div>`;
+      }
+
+      function renderWaiting(list) {
+        const wHash = list.map(t => t.ticket_id).join(',');
+        if (wHash === lastWaitingHash) return;
+        lastWaitingHash = wHash;
+
+        document.getElementById('wait-badge').textContent = list.length + ' waiting';
+        document.getElementById('hdr-waiting').textContent = list.length;
+        const el = document.getElementById('waiting-list');
+        if (!list.length) {
+          el.innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--text-muted);">
+            <svg style="width:40px;height:40px;margin:0 auto 12px;opacity:0.2;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            <div style="font-size:14px;font-weight:500;">No one waiting</div>
+          </div>`;
+          return;
+        }
+        el.innerHTML = list.map((t, i) => `
+          <div class="rq-row-hover" style="display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--border-soft);transition:background 0.15s;">
+            <div style="width:28px;height:28px;flex-shrink:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;
+              background:${i === 0 ? 'var(--pri-num-first-bg)' : 'var(--pri-num-bg)'};color:${i === 0 ? 'var(--pri-num-first)' : 'var(--pri-num-text)'};">
+              ${i + 1}
+            </div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-primary);">${t.name}</div>
+              <div style="font-size:12px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-muted);">${t.title || t.category}</div>
+            </div>
+            <span class="${priClass(t.priority)}" style="flex-shrink:0;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;">${priLabel(t.priority)}</span>
+          </div>`).join('');
+      }
+
+      function updateMyPos(list, serving) {
+        if (!myTicketId) return;
+        const tracker = document.getElementById('pos-tracker');
+        if (serving && serving.ticket_id === myTicketId) {
+          tracker.style.display = 'block';
+          document.getElementById('pos-num').textContent = '★';
+          document.getElementById('pos-sub').textContent = "It's your turn! Please go to IT support.";
+          document.getElementById('pos-ticket').textContent = myTicketId;
+          showToast("🎉 It's your turn!", "Please proceed to the IT support desk.");
+          return;
+        }
+        const pos = list.findIndex(t => t.ticket_id === myTicketId);
+        if (pos >= 0) {
+          tracker.style.display = 'block';
+          document.getElementById('pos-num').textContent = pos + 1;
+          document.getElementById('pos-sub').textContent = pos === 0 ? "🔜 You're next!" : `${pos} ${pos === 1 ? 'person' : 'people'} ahead of you`;
+          document.getElementById('pos-ticket').textContent = myTicketId;
+        } else {
+          tracker.style.display = 'none';
+        }
+      }
+
+      async function poll() {
+        try {
+          const r = await fetch("{% url 'api_queue_status' %}");
+          const d = await r.json();
+          renderServing(d.serving);
+          renderWaiting(d.waiting);
+          updateMyPos(d.waiting, d.serving);
+        } catch (e) { }
+      }
+
+      document.getElementById('join-form').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const btn = document.getElementById('join-btn');
+        btn.disabled = true;
+        btn.innerHTML = `<svg style="width:16px;height:16px;animation:spin 1s linear infinite;" fill="none" viewBox="0 0 24 24"><circle style="opacity:0.2" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path style="opacity:0.75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg> Submitting...`;
+        const fd = new FormData(this);
+        try {
+          const r = await fetch("{% url 'api_queue_join' %}", { method: 'POST', body: fd, headers: { 'X-CSRFToken': CSRF } });
+          const d = await r.json();
+          if (d.ok) {
+            myTicketId = d.ticket_id;
+            localStorage.setItem('rq_ticket', myTicketId);
+            document.getElementById('form-view').style.display = 'none';
+            document.getElementById('confirm-view').style.display = 'block';
+            document.getElementById('conf-ticket-id').textContent = d.ticket_id;
+            document.getElementById('conf-pos-text').textContent = `You are #${d.position} in the queue.`;
+            const tracker = document.getElementById('pos-tracker');
+            tracker.style.display = 'block';
+            document.getElementById('pos-num').textContent = d.position;
+            document.getElementById('pos-sub').textContent = d.position === 1 ? "🔜 You're next!" : `${d.position - 1} ${d.position === 2 ? 'person' : 'people'} ahead of you`;
+            document.getElementById('pos-ticket').textContent = d.ticket_id;
+            poll();
+            if (Notification.permission === 'default') Notification.requestPermission();
+          } else {
+            alert(d.error || 'Something went wrong. Please try again.');
+            btn.disabled = false;
+            btn.innerHTML = `<svg style="width:16px;height:16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 4v16m8-8H4"/></svg> Submit Ticket`;
+          }
+        } catch (err) {
+          alert('Network error. Please try again.');
+          btn.disabled = false;
+          btn.innerHTML = `<svg style="width:16px;height:16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 4v16m8-8H4"/></svg> Submit Ticket`;
+        }
+      });
+
+      async function leaveQueue() {
+        if (!myTicketId) return;
+        if (!confirm('Are you sure you want to leave the queue?')) return;
+        try {
+          await fetch("{% url 'api_queue_leave' %}", {
+            method: 'POST', body: JSON.stringify({ ticket_id: myTicketId }),
+            headers: { 'X-CSRFToken': CSRF, 'Content-Type': 'application/json' }
+          });
+        } catch (e) { }
+        myTicketId = null;
+        localStorage.removeItem('rq_ticket');
+        resetForm();
+        poll();
+      }
+
+      document.getElementById('btn-leave').addEventListener('click', leaveQueue);
+      document.getElementById('btn-leave2').addEventListener('click', leaveQueue);
+      document.getElementById('btn-rejoin').addEventListener('click', () => {
+        myTicketId = null;
+        localStorage.removeItem('rq_ticket');
+        resetForm();
+      });
+
+      function resetForm() {
+        document.getElementById('form-view').style.display = 'block';
+        document.getElementById('confirm-view').style.display = 'none';
+        document.getElementById('pos-tracker').style.display = 'none';
+        document.getElementById('join-form').reset();
+        const btn = document.getElementById('join-btn');
+        btn.disabled = false;
+        btn.innerHTML = `<svg style="width:16px;height:16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M12 4v16m8-8H4"/></svg> Submit Ticket`;
+      }
+
+      if (myTicketId) {
+        document.getElementById('form-view').style.display = 'none';
+        document.getElementById('confirm-view').style.display = 'block';
+        document.getElementById('conf-ticket-id').textContent = myTicketId;
+        document.getElementById('conf-pos-text').textContent = 'Checking your position...';
+        document.getElementById('pos-tracker').style.display = 'block';
+        document.getElementById('pos-ticket').textContent = myTicketId;
+      }
+
+      poll();
+      setInterval(poll, 5000);
+
+      // Spin keyframe for button loading state
+      const style = document.createElement('style');
+      style.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
+      document.head.appendChild(style);
+    })();
+  </script>
+
+  <style>
+    /* Responsive: stack columns on mobile */
+    @media (max-width: 900px) {
+      .lg-grid {
+        grid-template-columns: 1fr !important;
+      }
+    }
+  </style>
+
+</body>
+
+</html>

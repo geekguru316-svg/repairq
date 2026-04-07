@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>RepairQ Queue</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100">
+
+    <!-- HEADER -->
+    <div class="bg-blue-900 text-white text-center py-10">
+        <div class="text-sm bg-blue-700 inline-block px-3 py-1 rounded-full mb-2">
+            QUEUE IS LIVE
+        </div>
+        <h1 class="text-3xl font-bold">Tech Support Desk</h1>
+        <p class="text-sm mt-2">Join the virtual line and wait your turn</p>
+    </div>
+
+    <div class="max-w-6xl mx-auto grid grid-cols-2 gap-6 mt-8">
+
+        <!-- LEFT SIDE -->
+        <div>
+            <!-- NOW SERVING -->
+            <div class="bg-white p-5 rounded-lg shadow mb-4 border-l-4 border-blue-500">
+                <h3 class="text-blue-600 font-semibold">NOW SERVING</h3>
+                <p class="text-gray-600 mt-2">
+                    {% if serving %}
+                    {{ serving.name }}
+                    {% else %}
+                    Queue is empty — no one being served.
+                    {% endif %}
+                </p>
+            </div>
+
+            <!-- WAITING -->
+            <div class="bg-white p-5 rounded-lg shadow">
+                <h3 class="font-semibold">PEOPLE WAITING</h3>
+                <ul class="mt-2 text-gray-600">
+                    {% for person in waiting %}
+                    <li>{{ person.name }}</li>
+                    {% empty %}
+                    <li>No one waiting.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- RIGHT SIDE FORM -->
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h3 class="font-semibold mb-4">Join the Queue</h3>
+
+            <form method="POST">
+                {% csrf_token %}
+
+                <input name="name" placeholder="Your Name" class="w-full border p-2 mb-3 rounded">
+
+                <select name="department" class="w-full border p-2 mb-3 rounded">
+                    <option>Select Department</option>
+                    <option>IT</option>
+                    <option>HR</option>
+                </select>
+
+                <textarea name="issue" placeholder="Describe issue" class="w-full border p-2 mb-3 rounded"></textarea>
+
+                <button class="w-full bg-blue-600 text-white py-2 rounded">
+                    Join Queue →
+                </button>
+            </form>
+        </div>
+
+    </div>
+
+</body>
+
+</html>

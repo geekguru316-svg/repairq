@@ -1,0 +1,136 @@
+{% extends 'tickets/base.html' %}
+{% block title %}Reports{% endblock %}
+{% block page_title %}Report Engine{% endblock %}
+{% block content %}
+
+<!-- Controls -->
+<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rad2);padding:18px 22px;margin-bottom:20px;display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap;">
+  <form method="get" style="display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;width:100%;">
+    <div>
+      <div style="font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Period</div>
+      <select name="period" class="filter-select" onchange="this.form.submit()">
+        <option value="daily"   {% if period == 'daily' %}selected{% endif %}>Daily (24h)</option>
+        <option value="weekly"  {% if period == 'weekly' %}selected{% endif %}>Weekly (7 days)</option>
+        <option value="monthly" {% if period == 'monthly' %}selected{% endif %}>Monthly (30 days)</option>
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary">
+      <svg fill="none" viewBox="0 0 14 14" stroke="currentColor" stroke-width="2"><path d="M7 1v8M4 6l3 3 3-3M2 11h10v2H2z"/></svg>
+      Generate Report
+    </button>
+    <span style="margin-left:auto;font-size:12px;color:var(--muted);align-self:center;">Showing: {{ period|title }} report</span>
+  </form>
+</div>
+
+<!-- KPI Strip -->
+<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px;">
+  <div class="stat-card sc-blue"><div class="stat-label">Received</div><div class="stat-value sv-blue" style="font-size:28px;">{{ received }}</div></div>
+  <div class="stat-card sc-green"><div class="stat-label">Resolved</div><div class="stat-value sv-green" style="font-size:28px;">{{ resolved }}</div></div>
+  <div class="stat-card sc-yellow"><div class="stat-label">Avg Resolution</div><div class="stat-value sv-yellow" style="font-size:28px;">{{ avg_hours }}h</div></div>
+  <div class="stat-card sc-green"><div class="stat-label">SLA Compliance</div><div class="stat-value sv-green" style="font-size:28px;">{{ sla_rate }}%</div></div>
+  <div class="stat-card sc-red"><div class="stat-label">Breaches</div><div class="stat-value sv-red" style="font-size:28px;">{{ breaches }}</div></div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+  <!-- By Category -->
+  <div class="card">
+    <div class="card-header"><div class="card-title">Tickets by Category</div></div>
+    <div style="padding:16px 20px;">
+      {% for item in by_category %}
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div style="width:90px;text-align:right;font-size:12px;color:var(--muted);flex-shrink:0;text-transform:capitalize;">{{ item.category }}</div>
+        <div style="flex:1;background:var(--bg3);border-radius:3px;height:22px;overflow:hidden;">
+          {% if received %}
+          <div style="width:{% widthratio item.count received 100 %}%;height:100%;background:var(--accent);border-radius:3px;display:flex;align-items:center;padding-left:8px;min-width:28px;">
+            <span style="font-size:11px;font-weight:700;color:rgba(255,255,255,.9);font-family:var(--mono);">{{ item.count }}</span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% empty %}
+      <div class="text-muted">No data for this period.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- By Priority -->
+  <div class="card">
+    <div class="card-header"><div class="card-title">Tickets by Priority</div></div>
+    <div style="padding:16px 20px;">
+      {% for item in by_priority %}
+      {% with colors="critical:#dc2626,high:#ea580c,medium:#ca8a04,low:#475569" %}
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div style="width:90px;text-align:right;font-size:12px;color:var(--muted);flex-shrink:0;text-transform:capitalize;">{{ item.priority }}</div>
+        <div style="flex:1;background:var(--bg3);border-radius:3px;height:22px;overflow:hidden;">
+          {% if received %}
+          <div style="width:{% widthratio item.count received 100 %}%;height:100%;background:{% if item.priority == 'critical' %}var(--r){% elif item.priority == 'high' %}var(--o){% elif item.priority == 'medium' %}var(--y){% else %}var(--hint){% endif %};border-radius:3px;display:flex;align-items:center;padding-left:8px;min-width:28px;">
+            <span style="font-size:11px;font-weight:700;color:rgba(255,255,255,.9);font-family:var(--mono);">{{ item.count }}</span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endwith %}
+      {% empty %}
+      <div class="text-muted">No data for this period.</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Technician Performance -->
+<div class="card mb-20">
+  <div class="card-header">
+    <div class="card-title">Technician Performance</div>
+    <span class="card-sub ml-auto">{{ period|title }} report</span>
+  </div>
+  <table class="tbl">
+    <thead><tr><th>Technician</th><th>Assigned</th><th>Resolved</th><th>Avg Time</th><th>SLA Rate</th><th>Breaches</th></tr></thead>
+    <tbody>
+      {% for ts in tech_stats %}
+      <tr>
+        <td>
+          <div class="tech-chip">
+            <div class="tech-dot" style="background:{{ ts.tech.color }};color:#fff;width:22px;height:22px;font-size:9px;">{{ ts.tech.initials }}</div>
+            {{ ts.tech.name }}
+          </div>
+        </td>
+        <td>{{ ts.assigned }}</td>
+        <td>{{ ts.resolved }}</td>
+        <td class="text-mono">{{ ts.avg_hours }}h</td>
+        <td>
+          <div>{{ ts.sla_rate }}%</div>
+          <div style="height:5px;background:var(--bg3);border-radius:3px;margin-top:4px;overflow:hidden;">
+            <div style="width:{{ ts.sla_rate }}%;height:100%;background:{% if ts.sla_rate >= 90 %}var(--g){% elif ts.sla_rate >= 75 %}var(--y){% else %}var(--r){% endif %};border-radius:3px;"></div>
+          </div>
+        </td>
+        <td style="color:{% if ts.breaches == 0 %}#4ade80{% elif ts.breaches <= 2 %}#fbbf24{% else %}#f87171{% endif %};">{{ ts.breaches }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6" class="text-muted" style="text-align:center;padding:24px;">No technician data for this period.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Scheduled Reports -->
+<div style="font-family:var(--head);font-size:18px;font-weight:700;margin-bottom:12px;">Scheduled Delivery</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
+  {% for sched in schedules %}
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rad2);padding:18px 20px;">
+    <div style="font-family:var(--head);font-size:20px;font-weight:700;margin-bottom:4px;">{{ sched.get_frequency_display }}</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">{{ sched.name }}</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--muted);">
+      <span>{% if sched.is_active %}Active{% else %}Inactive{% endif %}</span>
+      <span style="padding:3px 10px;border-radius:4px;background:{% if sched.is_active %}rgba(22,163,74,.15){% else %}rgba(100,116,139,.15){% endif %};color:{% if sched.is_active %}#4ade80{% else %}#94a3b8{% endif %};font-size:11px;font-weight:700;">{{ sched.format|upper }}</span>
+    </div>
+    <hr class="divider">
+    <div style="font-size:11px;color:var(--muted);">To: {{ sched.recipients }}</div>
+    {% if sched.last_sent %}
+    <div style="font-size:11px;color:var(--hint);margin-top:4px;">Last sent: {{ sched.last_sent|date:"M d, Y" }}</div>
+    {% endif %}
+  </div>
+  {% empty %}
+  <div class="text-muted" style="grid-column:span 3;">No report schedules configured. Add them via <a href="/admin/tickets/reportschedule/add/" style="color:#60a5fa;">Django Admin</a>.</div>
+  {% endfor %}
+</div>
+{% endblock %}

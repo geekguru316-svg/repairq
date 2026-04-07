@@ -1,0 +1,1124 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <link rel="icon" type="image/png" href="{% static 'tickets/img/favicon.png' %}">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}RepairQ{% endblock %} — IT Repair System</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      /* Premium Palette */
+      --accent: #3b82f6;
+      --accent2: #2563eb;
+      --g: #10b981;
+      --r: #ef4444;
+      --y: #f59e0b;
+      --o: #f97316;
+      --p: #8b5cf6;
+      --mono: 'JetBrains Mono', monospace;
+      --head: 'Barlow Condensed', sans-serif;
+      --body: 'Barlow', sans-serif;
+      --rad: 8px;
+      --rad2: 12px;
+
+      /* Refined Dark Theme */
+      --bg: #0b0e14;
+      --bg2: #151923;
+      --bg3: #1e2433;
+      --bg4: #282f42;
+      --border: rgba(255, 255, 255, 0.08);
+      --border2: rgba(255, 255, 255, 0.12);
+      --text: #f0f4f8;
+      --muted: #94a3b8;
+      --hint: #64748b;
+      --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.5);
+      --glass: rgba(21, 25, 35, 0.7);
+      --glass-border: rgba(255, 255, 255, 0.1);
+    }
+
+    body.light-mode {
+      --bg: #fdfdfd;
+      --bg2: #ffffff;
+      --bg3: #f1f5f9;
+      --bg4: #e2e8f0;
+      --border: #e2e8f0;
+      --border2: #cbd5e1;
+      --text: #1e293b;
+      --muted: #64748b;
+      --hint: #94a3b8;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --glass: rgba(255, 255, 255, 0.8);
+      --glass-border: rgba(0, 0, 0, 0.05);
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    html {
+      font-size: 14px
+    }
+
+    body {
+      font-family: var(--body);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      line-height: 1.5;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    .theme-toggle {
+      cursor: pointer;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      transition: all .15s
+    }
+
+    .theme-toggle:hover {
+      background: var(--bg4);
+      color: var(--text)
+    }
+
+    .theme-toggle .sun {
+      display: none
+    }
+
+    body.light-mode .theme-toggle .sun {
+      display: block
+    }
+
+    body.light-mode .theme-toggle .moon {
+      display: none
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 240px;
+      min-height: 100vh;
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      z-index: 100;
+      box-shadow: 10px 0 30px -15px rgba(0, 0, 0, 0.5);
+    }
+
+    .sidebar-logo {
+      padding: 32px 24px 24px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+
+    .logo-text {
+      font-family: var(--head);
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 0.5px;
+    }
+
+    .logo-sub {
+      font-size: 11px;
+      color: var(--muted);
+      font-family: var(--mono);
+      margin-top: -2px;
+      opacity: 0.8;
+    }
+
+    .sidebar-section {
+      padding: 20px 16px 8px;
+    }
+
+    .sec-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--hint);
+      padding: 0 12px 10px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-radius: var(--rad);
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      margin-bottom: 4px;
+      border: 1px solid transparent;
+      text-decoration: none;
+    }
+
+    .nav-item:hover {
+      background: var(--bg3);
+      color: var(--text);
+      transform: translateX(4px);
+    }
+
+    .nav-item.active {
+      background: rgba(59, 130, 246, 0.1);
+      color: var(--accent);
+      border-color: rgba(59, 130, 246, 0.2);
+      font-weight: 600;
+    }
+
+    .nav-item svg {
+      width: 18px;
+      height: 18px;
+      opacity: 0.7;
+      transition: all 0.2s;
+    }
+
+    .nav-item.active svg {
+      opacity: 1;
+      color: var(--accent);
+    }
+
+    .sidebar-user {
+      margin-top: auto;
+      padding: 24px;
+      border-top: 1px solid var(--border);
+      background: rgba(0, 0, 0, 0.1);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--p));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .user-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .user-role {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* Main */
+    .main {
+      margin-left: 240px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      background: var(--bg);
+    }
+
+    .topbar {
+      height: 70px;
+      background: var(--glass);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 40px;
+      gap: 20px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      transition: all 0.3s;
+    }
+
+    .topbar-title {
+      font-family: var(--head);
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .topbar-actions {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .content {
+      padding: 40px;
+      flex: 1;
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: var(--rad);
+      font-family: var(--body);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+      border: none;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+    }
+
+    .btn-ghost {
+      background: var(--bg3);
+      color: var(--text);
+      border: 1px solid var(--border2);
+    }
+
+    .btn-ghost:hover {
+      background: var(--bg4);
+      border-color: var(--muted);
+    }
+
+    .btn-danger {
+      background: rgba(220, 38, 38, 0.1);
+      color: #f87171;
+      border: 1px solid rgba(220, 38, 38, 0.2);
+    }
+
+    .btn-danger:hover {
+      background: rgba(220, 38, 38, 0.2);
+      border-color: #f87171;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--rad2);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      transition: transform 0.2s;
+    }
+
+    .card:hover {
+      border-color: var(--border2);
+    }
+
+    .card-header {
+      padding: 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .card-title {
+      font-family: var(--head);
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .card-sub {
+      font-size: 11px;
+      color: var(--muted)
+    }
+
+    /* Stat cards */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 22px
+    }
+
+    .stat-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--rad2);
+      padding: 18px 20px;
+      position: relative;
+      overflow: hidden
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px
+    }
+
+    .sc-blue::before {
+      background: var(--accent)
+    }
+
+    .sc-green::before {
+      background: var(--g)
+    }
+
+    .sc-red::before {
+      background: var(--r)
+    }
+
+    .sc-yellow::before {
+      background: var(--y)
+    }
+
+    .sc-orange::before {
+      background: var(--o)
+    }
+
+    .stat-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .8px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px
+    }
+
+    .stat-value {
+      font-family: var(--head);
+      font-size: 36px;
+      font-weight: 700;
+      line-height: 1
+    }
+
+    .sv-blue {
+      color: #60a5fa
+    }
+
+    .sv-green {
+      color: #4ade80
+    }
+
+    .sv-red {
+      color: #f87171
+    }
+
+    .sv-yellow {
+      color: #fbbf24
+    }
+
+    .sv-orange {
+      color: #fb923c
+    }
+
+    .stat-delta {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 6px
+    }
+
+    /* Table */
+    .tbl {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
+    .tbl th {
+      text-align: left;
+      padding: 14px 20px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: rgba(0, 0, 0, 0.1);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .tbl td {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+
+    .tbl tbody tr:hover {
+      background: var(--bg3);
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: var(--mono);
+      white-space: nowrap
+    }
+
+    .badge::before {
+      content: '';
+      width: 5px;
+      height: 5px;
+      border-radius: 50%
+    }
+
+    .b-received {
+      background: rgba(37, 99, 235, .15);
+      color: #60a5fa
+    }
+
+    .b-received::before {
+      background: #60a5fa
+    }
+
+    .b-triaged {
+      background: rgba(124, 58, 237, .15);
+      color: #a78bfa
+    }
+
+    .b-triaged::before {
+      background: #a78bfa
+    }
+
+    .b-assigned {
+      background: rgba(202, 138, 4, .15);
+      color: #fbbf24
+    }
+
+    .b-assigned::before {
+      background: #fbbf24
+    }
+
+    .b-inprogress {
+      background: rgba(234, 88, 12, .15);
+      color: #fb923c
+    }
+
+    .b-inprogress::before {
+      background: #fb923c
+    }
+
+    .b-resolved {
+      background: rgba(22, 163, 74, .15);
+      color: #4ade80
+    }
+
+    .b-resolved::before {
+      background: #4ade80
+    }
+
+    .b-closed {
+      background: rgba(100, 116, 139, .15);
+      color: #94a3b8
+    }
+
+    .b-closed::before {
+      background: #94a3b8
+    }
+
+    .pri {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 700;
+      font-family: var(--mono)
+    }
+
+    .pri-critical {
+      background: rgba(220, 38, 38, .2);
+      color: #f87171;
+      border: 1px solid rgba(220, 38, 38, .3)
+    }
+
+    .pri-high {
+      background: rgba(234, 88, 12, .2);
+      color: #fb923c;
+      border: 1px solid rgba(234, 88, 12, .3)
+    }
+
+    .pri-medium {
+      background: rgba(202, 138, 4, .2);
+      color: #fbbf24;
+      border: 1px solid rgba(202, 138, 4, .3)
+    }
+
+    .pri-low {
+      background: rgba(100, 116, 139, .2);
+      color: #94a3b8;
+      border: 1px solid rgba(100, 116, 139, .3)
+    }
+
+    /* Alerts */
+    .alert {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 11px 14px;
+      border-radius: var(--rad);
+      font-size: 13px;
+      margin-bottom: 16px;
+      border: 1px solid
+    }
+
+    .alert svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+      margin-top: 2px
+    }
+
+    .alert-danger {
+      background: rgba(220, 38, 38, .1);
+      border-color: rgba(220, 38, 38, .3);
+      color: #fca5a5
+    }
+
+    .alert-warn {
+      background: rgba(202, 138, 4, .1);
+      border-color: rgba(202, 138, 4, .3);
+      color: #fde68a
+    }
+
+    .alert-info {
+      background: rgba(37, 99, 235, .1);
+      border-color: rgba(37, 99, 235, .3);
+      color: #93c5fd
+    }
+
+    .alert-success {
+      background: rgba(22, 163, 74, .1);
+      border-color: rgba(22, 163, 74, .3);
+      color: #86efac
+    }
+
+    /* Forms */
+    .form-group {
+      margin-bottom: 16px
+    }
+
+    .form-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .5px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 6px
+    }
+
+    .form-control {
+      width: 100%;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      border-radius: var(--rad);
+      color: var(--text);
+      font-family: var(--body);
+      font-size: 13px;
+      padding: 9px 12px;
+      outline: none;
+      transition: border-color .15s
+    }
+
+    .form-control:focus {
+      border-color: var(--accent)
+    }
+
+    .form-control::placeholder {
+      color: var(--hint)
+    }
+
+    textarea.form-control {
+      resize: vertical;
+      min-height: 90px
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px
+    }
+
+    /* Misc */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 18px 0
+    }
+
+    .text-muted {
+      color: var(--muted)
+    }
+
+    .text-mono {
+      font-family: var(--mono)
+    }
+
+    .mb-16 {
+      margin-bottom: 16px
+    }
+
+    .mb-20 {
+      margin-bottom: 20px
+    }
+
+    .flex {
+      display: flex
+    }
+
+    .items-center {
+      align-items: center
+    }
+
+    .gap-8 {
+      gap: 8px
+    }
+
+    .gap-12 {
+      gap: 12px
+    }
+
+    .ml-auto {
+      margin-left: auto
+    }
+
+    .tech-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 8px;
+      border-radius: 20px;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      font-size: 12px
+    }
+
+    .tech-dot {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-weight: 700
+    }
+
+    .avail-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0
+    }
+
+    .avail-available {
+      background: #4ade80
+    }
+
+    .avail-busy {
+      background: #fb923c
+    }
+
+    .avail-off {
+      background: var(--hint)
+    }
+
+    /* Toolbar/filters */
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      border-radius: var(--rad);
+      padding: 6px 12px;
+      flex: 1;
+      max-width: 300px
+    }
+
+    .search-box input {
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: var(--body);
+      font-size: 13px;
+      width: 100%
+    }
+
+    .search-box input::placeholder {
+      color: var(--hint)
+    }
+
+    .filter-select {
+      background: var(--bg3);
+      border: 1px solid var(--border2);
+      color: var(--text);
+      font-family: var(--body);
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: var(--rad);
+      outline: none;
+      cursor: pointer
+    }
+
+    /* Django messages */
+    .messages-list {
+      margin-bottom: 16px
+    }
+
+    /* Toast */
+    #toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 12px
+    }
+
+    .toast {
+      background: var(--bg2);
+      border: 1px solid var(--accent);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, .15);
+      border-radius: var(--rad2);
+      padding: 16px 20px;
+      min-width: 300px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      animation: toast-in .3s ease-out forwards;
+      transition: all .3s
+    }
+
+    .toast-icon {
+      width: 36px;
+      height: 36px;
+      background: rgba(37, 99, 235, .15);
+      color: var(--accent);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0
+    }
+
+    .toast-msg {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 2px
+    }
+
+    .toast-sub {
+      font-size: 12px;
+      color: var(--muted)
+    }
+
+    @keyframes toast-in {
+      from {
+        transform: translateX(100%);
+        opacity: 0
+      }
+
+      to {
+        transform: translateX(0);
+        opacity: 1
+      }
+    }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+
+<body>
+
+  {% if user.is_authenticated %}
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">
+        <svg width="18" height="18" fill="none" viewBox="0 0 18 18" stroke="#fff" stroke-width="2"
+          stroke-linecap="round">
+          <path d="M9 2L2 6v6l7 4 7-4V6L9 2z" />
+          <path d="M9 2v16M2 6l7 4 7-4" />
+        </svg>
+      </div>
+      <div>
+        <div class="logo-text">RepairQ</div>
+        <div class="logo-sub">IT Service Request System</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sec-label">Main</div>
+      {% if user.is_staff or user.technician %}
+      <a class="nav-item {% if active_page == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
+        <svg fill="none" viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.8">
+          <rect x="1" y="1" width="6" height="6" rx="1" />
+          <rect x="9" y="1" width="6" height="6" rx="1" />
+          <rect x="1" y="9" width="6" height="6" rx="1" />
+          <rect x="9" y="9" width="6" height="6" rx="1" />
+        </svg>
+        Dashboard
+      </a>
+      {% endif %}
+      <a class="nav-item {% if active_page == 'tickets' %}active{% endif %}" href="{% url 'ticket_list' %}">
+        <svg fill="none" viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.8">
+          <path d="M2 4h12M2 8h8M2 12h6" />
+          <rect x="10" y="7" width="5" height="5" rx="1" />
+        </svg>
+        {% if user.is_superuser %}Ticket Queue{% elif user.technician %}My Assignments{% else %}My Tickets{% endif %}
+      </a>
+      {% if user.is_superuser %}
+      <a class="nav-item {% if active_page == 'assign' %}active{% endif %}" href="{% url 'assignments' %}">
+        <svg fill="none" viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.8">
+          <circle cx="6" cy="5" r="3" />
+          <path d="M1 14c0-3 2-5 5-5" />
+          <path d="M11 9l2 2 3-3" />
+        </svg>
+        Assignments
+      </a>
+      <a class="nav-item {% if active_page == 'reports' %}active{% endif %}" href="{% url 'reports' %}">
+        <svg fill="none" viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.8">
+          <path d="M2 2h12v12H2z" />
+          <path d="M5 11V8M8 11V6M11 11V9" />
+        </svg>
+        Reports
+      </a>
+      {% endif %}
+      <a class="nav-item {% if active_page == 'index' %}active{% endif %}" href="{% url 'index' %}">
+        <svg fill="none" viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.8">
+          <path d="M1 8h14M8 1v14M12 4l3 4-3 4" />
+        </svg>
+        Queue (Public View)
+      </a>
+    </div>
+
+    {% if user.is_superuser %}
+    <div class="sidebar-section">
+      <div class="sec-label">Admin</div>
+      <a class="nav-item {% if active_page == 'technicians' %}active{% endif %}" href="{% url 'technician_list' %}">
+        <svg fill="none" viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.8">
+          <circle cx="5" cy="5" r="3" />
+          <circle cx="11" cy="5" r="3" />
+          <path d="M1 14c0-2.5 1.8-4.5 4-4.5s4 2 4 2 1.5-2 4-2" />
+        </svg>
+        Technicians
+      </a>
+      <a class="nav-item" href="/admin/">
+        <svg fill="none" viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.8">
+          <path d="M8 2a6 6 0 100 12A6 6 0 008 2zm0 4v2m0 2h.01" />
+        </svg>
+        Django Admin
+      </a>
+    </div>
+    {% endif %}
+
+    <div class="sidebar-user">
+      <div class="user-avatar">{{ user.first_name.0 }}{{ user.last_name.0 }}</div>
+      <div>
+        <div class="user-name">{{ user.get_full_name|default:user.username }}</div>
+        <div class="user-role">{% if user.is_superuser %}Administrator{% elif user.technician %}Technician{% else
+          %}Staff / User{% endif %}</div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title">{% block page_title %}RepairQ{% endblock %}</div>
+      <div class="topbar-actions">
+        <div class="theme-toggle" id="theme-toggle" title="Toggle Theme">
+          <svg class="moon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+            stroke-width="2">
+            <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+          </svg>
+          <svg class="sun" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+            stroke-width="2">
+            <circle cx="12" cy="12" r="5" />
+            <path
+              d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 10h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+          </svg>
+        </div>
+        {% block topbar_actions %}
+        <a class="btn btn-primary" href="{% url 'ticket_create' %}">
+          <svg fill="none" viewBox="0 0 14 14" stroke="currentColor" stroke-width="2.5">
+            <path d="M7 2v10M2 7h10" />
+          </svg>
+          New Ticket
+        </a>
+        <a class="btn btn-ghost" href="{% url 'logout' %}">Logout</a>
+        {% endblock %}
+      </div>
+    </div>
+
+    <div class="content">
+      {% if messages %}
+      <div class="messages-list">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags|default:'info' }}">
+          <svg fill="none" viewBox="0 0 16 16" stroke="currentColor" stroke-width="2">
+            <circle cx="8" cy="8" r="7" />
+            <path d="M8 7v4M8 5h.01" />
+          </svg>
+          {{ message }}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}      {% block content %}{% endblock %}
+
+      <script>
+        document.addEventListener('DOMContentLoaded', () => {
+          // --- Admin Notifications (Polling) ---
+      {% if user.is_superuser %}
+      let lastUnassignedCount = null;
+      const sound = document.getElementById('notif-sound');
+      const container = document.getElementById('toast-container');
+
+      function createToast(title, body) {
+        const el = document.createElement('div');
+        el.className = 'toast';
+        el.innerHTML = `
+        <div class="toast-icon">
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        </div>
+        <div style="flex:1">
+          <div class="toast-msg">${title}</div>
+          <div class="toast-sub">${body}</div>
+        </div>
+      `;
+        container.appendChild(el);
+        setTimeout(() => {
+          el.style.opacity = '0';
+          el.style.transform = 'translateX(20px)';
+          setTimeout(() => el.remove(), 300);
+        }, 8000);
+      }
+
+      async function checkNotifications() {
+        try {
+          const resp = await fetch('{% url "api_notification_check" %}');
+          const data = await resp.json();
+          const currentCount = data.received_unassigned_count;
+
+          if (lastUnassignedCount !== null && currentCount > lastUnassignedCount) {
+            // Play sound
+            sound.play().catch(e => console.log('Autoplay blocked'));
+            // Show Toast
+            createToast('New Ticket Alert!', `There are now ${currentCount} unassigned repairs waiting in the queue.`);
+          }
+          lastUnassignedCount = currentCount;
+        } catch (err) {
+          console.error('Notif check failed', err);
+        }
+      }
+
+      // Check every 15 seconds
+      setInterval(checkNotifications, 15000);
+      checkNotifications(); // Immediate initial check
+      {% endif %}
+    });
+  </script>
+  {% endif %}
+
+  {% if not user.is_authenticated %}
+  {% block auth_content %}{% endblock %}
+
+  <footer style="position: fixed; bottom: 0; left: 0; width: 100%; padding: 14px 24px; text-align: center; border-top: 1px solid var(--bg4); color: var(--muted); font-size: 11px; opacity: 0.7; background: var(--bg); z-index: 10;">
+    &copy; Maintained by the Regional Information Technology Unit, Commission on Audit Region VII | All Rights Reserved
+  </footer>
+
+  <div id="toast-container"></div>
+  <audio id="notif-sound" preload="auto">
+    <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
+  </audio>
+
+  <script>
+    (function () {
+      const theme = localStorage.getItem('theme') || 'dark';
+      if (theme === 'light') {
+        document.body.classList.add('light-mode');
+      }
+    })();
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const toggle = document.getElementById('theme-toggle');
+      if (toggle) {
+        toggle.addEventListener('click', () => {
+          document.body.classList.toggle('light-mode');
+          const isLight = document.body.classList.contains('light-mode');
+          localStorage.setItem('theme', isLight ? 'light' : 'dark');
+        });
+      }
+    });
+  </script>
+  {% endif %}
+
+  {% block extra_js %}{% endblock %}
+</body>
+
+</html>

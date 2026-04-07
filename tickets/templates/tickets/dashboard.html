@@ -1,0 +1,91 @@
+{% extends 'tickets/base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+{% if overdue_tickets %}
+<div class="alert alert-danger">
+  <svg fill="none" viewBox="0 0 16 16" stroke="currentColor" stroke-width="2"><path d="M8 2L1 14h14L8 2zm0 4v4M8 12h.01"/></svg>
+  <div>
+    <strong>{{ overdue_tickets.count }} ticket{{ overdue_tickets.count|pluralize }} have breached SLA</strong> —
+    {% for t in overdue_tickets|slice:":3" %}{{ t.ticket_id }}{% if not forloop.last %}, {% endif %}{% endfor %}{% if overdue_tickets.count > 3 %} and {{ overdue_tickets.count|add:"-3" }} more{% endif %} require immediate attention.
+  </div>
+  <a class="btn btn-ghost" style="margin-left:auto;padding:4px 10px;font-size:11px;" href="{% url 'ticket_list' %}">View →</a>
+</div>
+{% endif %}
+
+<!-- Stats -->
+<div class="stats-row">
+  <a class="stat-card sc-blue" href="{% url 'ticket_list' %}?status=received,assigned,triaged,in_progress" style="text-decoration:none;cursor:pointer;display:block;">
+    <div class="stat-label">Open Tickets</div>
+    <div class="stat-value sv-blue">{{ open_count }}</div>
+    <div class="stat-delta">Active in queue</div>
+  </a>
+  <a class="stat-card sc-orange" href="{% url 'ticket_list' %}?status=in_progress" style="text-decoration:none;cursor:pointer;display:block;">
+    <div class="stat-label">In Progress</div>
+    <div class="stat-value sv-orange">{{ in_progress }}</div>
+    <div class="stat-delta">Being worked on</div>
+  </a>
+  <a class="stat-card sc-red" href="{% url 'ticket_list' %}?overdue=1" style="text-decoration:none;cursor:pointer;display:block;">
+    <div class="stat-label">Overdue / Breached</div>
+    <div class="stat-value sv-red">{{ overdue_count }}</div>
+    <div class="stat-delta">SLA violations</div>
+  </a>
+  <a class="stat-card sc-green" href="{% url 'ticket_list' %}?resolved_today=1" style="text-decoration:none;cursor:pointer;display:block;">
+    <div class="stat-label">Resolved Today</div>
+    <div class="stat-value sv-green">{{ resolved_today }}</div>
+    <div class="stat-delta">Closed today</div>
+  </a>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+  <!-- Recent tickets -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Recent Tickets</div>
+      <a class="btn btn-ghost" style="font-size:11px;padding:4px 10px;margin-left:auto;" href="{% url 'ticket_list' %}">View all →</a>
+    </div>
+    <table class="tbl">
+      <thead><tr><th>ID</th><th>Issue</th><th>Priority</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for ticket in recent_tickets %}
+        <tr onclick="location.href='{% url 'ticket_detail' ticket.ticket_id %}'">
+          <td class="text-mono text-muted" style="font-size:12px;">{{ ticket.ticket_id|slice:"12:" }}</td>
+          <td><strong>{{ ticket.title|truncatechars:35 }}</strong></td>
+          <td><span class="pri pri-{{ ticket.priority }}">{{ ticket.priority|upper }}</span></td>
+          <td>
+            {% with s=ticket.status %}
+            <span class="badge b-{{ s|cut:'_' }}">{{ ticket.get_status_display }}</span>
+            {% endwith %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" class="text-muted" style="text-align:center;padding:24px;">No tickets yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Technician availability -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Technician Availability</div>
+      <span class="card-sub ml-auto">{{ technicians.count }} total</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px;">
+      {% for tech in technicians %}
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rad);padding:12px;display:flex;align-items:center;gap:10px;">
+        <div style="width:32px;height:32px;border-radius:50%;background:{{ tech.color }};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;">{{ tech.initials }}</div>
+        <div style="min-width:0;">
+          <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ tech.name }}</div>
+          <div style="font-size:11px;color:var(--muted);">{{ tech.open_ticket_count }} open</div>
+        </div>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:4px;">
+          <div class="avail-dot avail-{{ tech.availability }}"></div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,199 @@
+{% extends 'tickets/base.html' %}
+{% block title %}Ticket Queue{% endblock %}
+{% block page_title %}Ticket Queue{% endblock %}
+
+{% block content %}
+{% if overdue_count %}
+<div class="alert alert-warn">
+  <svg fill="none" viewBox="0 0 16 16" stroke="currentColor" stroke-width="2"><circle cx="8" cy="8" r="7"/><path d="M8 5v3.5L10 10"/></svg>
+  <strong>{{ overdue_count }} ticket{{ overdue_count|pluralize }}</strong> {% if overdue_count == 1 %}is{% else %}are{% endif %} past SLA deadline and need immediate attention.
+</div>
+{% endif %}
+
+<style>
+/* CSS for stats and now serving */
+.qm-stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 24px; }
+@media(max-width:700px){.qm-stats{grid-template-columns:1fr 1fr;}}
+.qm-stat { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 20px; position: relative; overflow: hidden; }
+.qm-stat::before { content:''; position:absolute; top:0;left:0;right:0;height:3px; }
+.qs-blue::before{background:var(--accent)}.qs-green::before{background:var(--g)}.qs-yellow::before{background:var(--y)}.qs-red::before{background:var(--r)}
+.qm-stat-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); margin-bottom: 8px; }
+.qm-stat-val { font-family: var(--head); font-size: 36px; font-weight: 700; }
+.sv-blue{color:#60a5fa}.sv-green{color:#4ade80}.sv-yellow{color:#fbbf24}.sv-red{color:#f87171}
+
+.qm-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; margin-bottom: 24px; }
+.qm-head { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.qm-head h2 { font-family: var(--head); font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+.live-dot { width: 8px; height: 8px; background: var(--g); border-radius: 50%; box-shadow: 0 0 8px var(--g); animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
+
+.serving-panel { padding: 28px; }
+.serving-empty-state { text-align: center; padding: 40px; color: var(--muted); }
+.serving-ticket-name { font-size: 28px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+.serving-meta { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+.meta-tag { display: inline-flex; align-items: center; gap: 6px; background: var(--bg3); border: 1px solid var(--border); padding: 6px 12px; border-radius: 8px; font-size: 13px; color: var(--muted); }
+.btn-resolve { background: linear-gradient(135deg, var(--g), #16a34a); color: #fff; border: none; border-radius: 10px; padding: 12px 24px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: var(--body); transition: all .2s; display: flex; align-items: center; gap: 8px; }
+.btn-resolve:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(34,197,94,0.3); }
+.btn-skip { background: var(--bg3); color: var(--muted); border: 1px solid var(--border2); border-radius: 10px; padding: 12px 20px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: var(--body); transition: all .2s; margin-left: 10px; }
+.btn-skip:hover { background: var(--bg4); color: var(--text); }
+</style>
+
+<!-- Stats -->
+<div class="qm-stats">
+    <div class="qm-stat qs-blue">
+        <div class="qm-stat-label">Waiting</div>
+        <div class="qm-stat-val sv-blue" id="stat-waiting">{{ waiting_count }}</div>
+    </div>
+    <div class="qm-stat qs-yellow">
+        <div class="qm-stat-label">Now Serving</div>
+        <div class="qm-stat-val sv-yellow" id="stat-serving">{{ serving_count }}</div>
+    </div>
+    <div class="qm-stat qs-green">
+        <div class="qm-stat-label">Resolved Today</div>
+        <div class="qm-stat-val sv-green">{{ resolved_today }}</div>
+    </div>
+    <div class="qm-stat qs-red">
+        <div class="qm-stat-label">Urgent</div>
+        <div class="qm-stat-val sv-red">{{ urgent_count }}</div>
+    </div>
+</div>
+
+<!-- Now Serving Panel -->
+<div class="qm-card">
+    <div class="qm-head">
+        <h2><span class="live-dot"></span> Now Serving</h2>
+        <button class="btn btn-primary" id="btn-call-next" onclick="callNext()">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+            Call Next
+        </button>
+    </div>
+    <div class="serving-panel" id="serving-panel">
+        {% if now_serving %}
+        <div class="serving-ticket-name">{{ now_serving.requester_name }}</div>
+        <div class="serving-meta">
+            <span class="meta-tag">🎫 {{ now_serving.ticket_id }}</span>
+            <span class="meta-tag">📍 {{ now_serving.location|default:"—" }}</span>
+            <span class="meta-tag">💻 {{ now_serving.get_category_display }}</span>
+            <span class="meta-tag"><span class="badge b-{{ now_serving.priority }}">{{ now_serving.priority }}</span></span>
+        </div>
+        <p style="color:var(--muted);font-size:14px;margin-bottom:20px;">{{ now_serving.description|truncatechars:120 }}</p>
+        <div style="display:flex;gap:10px;">
+            <button class="btn-resolve" onclick="resolveTicket('{{ now_serving.ticket_id }}')">
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M5 13l4 4L19 7"/></svg>
+                Mark Resolved
+            </button>
+            <button class="btn-skip" onclick="skipTicket('{{ now_serving.ticket_id }}')">Skip</button>
+        </div>
+        {% else %}
+        <div class="serving-empty-state">
+            <svg width="56" height="56" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="opacity:.2;margin:0 auto 16px;display:block;"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
+            <div style="font-size:16px;font-weight:600;margin-bottom:8px;">No one being served</div>
+            <div style="font-size:13px;">Click "Call Next" to bring someone in.</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+async function post(url, data){
+    const r = await fetch(url, {
+        method:'POST', body: JSON.stringify(data),
+        headers:{'X-CSRFToken':'{{ csrf_token }}','Content-Type':'application/json'}
+    });
+    return r.json();
+}
+async function callNext(){
+    const d = await post("{% url 'api_queue_next' %}", {});
+    if(d.ok) location.reload();
+    else alert(d.error || 'No one in queue.');
+}
+async function resolveTicket(tid){
+    const d = await post("{% url 'api_queue_resolve' %}", {ticket_id: tid});
+    if(d.ok) location.reload();
+    else alert(d.error);
+}
+async function skipTicket(tid){
+    const d = await post("{% url 'api_queue_skip' %}", {ticket_id: tid});
+    if(d.ok) location.reload();
+    else alert(d.error);
+}
+</script>
+
+<div class="card">
+  <!-- Filters -->
+  <form method="get" class="toolbar">
+    <div class="search-box">
+      <svg fill="none" viewBox="0 0 16 16" stroke="currentColor" stroke-width="2"><circle cx="6.5" cy="6.5" r="5"/><path d="M12 12l2.5 2.5"/></svg>
+      <input type="text" name="q" placeholder="Search tickets…" value="{{ filter_q }}">
+    </div>
+    <select name="status" class="filter-select" onchange="this.form.submit()">
+      <option value="">All Statuses</option>
+      <option value="received"    {% if filter_status == 'received' %}selected{% endif %}>Received</option>
+      <option value="triaged"     {% if filter_status == 'triaged' %}selected{% endif %}>Triaged</option>
+      <option value="assigned"    {% if filter_status == 'assigned' %}selected{% endif %}>Assigned</option>
+      <option value="in_progress" {% if filter_status == 'in_progress' %}selected{% endif %}>In Progress</option>
+      <option value="resolved"    {% if filter_status == 'resolved' %}selected{% endif %}>Resolved</option>
+      <option value="closed"      {% if filter_status == 'closed' %}selected{% endif %}>Closed</option>
+    </select>
+    <select name="priority" class="filter-select" onchange="this.form.submit()">
+      <option value="">All Priorities</option>
+      <option value="critical" {% if filter_priority == 'critical' %}selected{% endif %}>Critical</option>
+      <option value="high"     {% if filter_priority == 'high' %}selected{% endif %}>High</option>
+      <option value="medium"   {% if filter_priority == 'medium' %}selected{% endif %}>Medium</option>
+      <option value="low"      {% if filter_priority == 'low' %}selected{% endif %}>Low</option>
+    </select>
+    <select name="technician" class="filter-select" onchange="this.form.submit()">
+      <option value="">All Technicians</option>
+      {% for tech in technicians %}
+      <option value="{{ tech.id }}" {% if filter_tech == tech.id|stringformat:"s" %}selected{% endif %}>{{ tech.name }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-ghost">Filter</button>
+    <a href="{% url 'ticket_list' %}" class="btn btn-ghost">Clear</a>
+    <span class="text-muted" style="margin-left:auto;font-size:12px;">{{ tickets.count }} result{{ tickets.count|pluralize }}</span>
+  </form>
+
+  <table class="tbl">
+    <thead>
+      <tr>
+        <th>Ticket ID</th><th>Title</th><th>Requester</th><th>Category</th><th>Priority</th>
+        <th>Status</th><th>Assigned To</th><th>Submitted</th><th>SLA</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for ticket in tickets %}
+      <tr onclick="location.href='{% url 'ticket_detail' ticket.ticket_id %}'">
+        <td class="text-mono text-muted" style="font-size:12px;">{{ ticket.ticket_id }}</td>
+        <td><strong>{{ ticket.title|truncatechars:45 }}</strong></td>
+        <td>{{ ticket.requester_name }}</td>
+        <td style="text-transform:capitalize;">{{ ticket.category }}</td>
+        <td><span class="pri pri-{{ ticket.priority }}">{{ ticket.priority|upper }}</span></td>
+        <td><span class="badge b-{{ ticket.status|cut:'_' }}">{{ ticket.get_status_display }}</span></td>
+        <td>
+          {% if ticket.assigned_to %}
+          <div class="tech-chip">
+            <div class="tech-dot" style="background:{{ ticket.assigned_to.color }};color:#fff;">{{ ticket.assigned_to.initials }}</div>
+            {{ ticket.assigned_to.name }}
+          </div>
+          {% else %}
+          <span class="text-muted">Unassigned</span>
+          {% endif %}
+        </td>
+        <td class="text-muted" style="font-size:12px;">{{ ticket.created_at|timesince }} ago</td>
+        <td style="font-family:var(--mono);font-size:12px;">
+          {% if ticket.is_overdue %}
+            <span style="color:#f87171;">BREACHED</span>
+          {% elif ticket.status in 'resolved closed' %}
+            <span style="color:#4ade80;">On time</span>
+          {% else %}
+            <span style="color:#fbbf24;">{{ ticket.sla_due_at|timeuntil }}</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="8" class="text-muted" style="text-align:center;padding:32px;">No tickets match your filters.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

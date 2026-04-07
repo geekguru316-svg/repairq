@@ -1,0 +1,283 @@
+{% extends 'tickets/base.html' %}
+{% block title %}Technicians{% endblock %}
+{% block page_title %}Technicians{% endblock %}
+
+{% block topbar_actions %}
+{% if user.is_superuser %}
+<a class="btn btn-primary" href="/admin/tickets/technician/add/">
+  <svg fill="none" viewBox="0 0 14 14" stroke="currentColor" stroke-width="2.5"><path d="M7 2v10M2 7h10"/></svg>
+  Add Technician
+</a>
+{% endif %}
+<a class="btn btn-ghost" href="{% url 'logout' %}">Logout</a>
+{% endblock %}
+
+{% block content %}
+<div class="card mb-20">
+  <div class="card-header">
+    <div class="card-title">Technician Roster</div>
+    <span class="card-sub ml-auto">{{ technicians.count }} technician{{ technicians.count|pluralize }}</span>
+  </div>
+  <table class="tbl">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Department</th>
+        <th>Skills</th>
+        <th>Status</th>
+        <th>Open Tickets</th>
+        <th>Rating</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for tech in technicians %}
+      <tr>
+        <td>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:32px;height:32px;border-radius:50%;background:{{ tech.color }};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;">
+              {{ tech.initials }}
+            </div>
+            <strong>{{ tech.name }}</strong>
+          </div>
+        </td>
+        <td class="text-mono text-muted" style="font-size:12px;">{{ tech.email }}</td>
+        <td class="text-muted">{{ tech.department|default:"—" }}</td>
+        <td>
+          {% for skill in tech.skills.all %}
+          <span class="badge b-{% if skill.skill == 'hardware' %}received{% elif skill.skill == 'network' %}assigned{% elif skill.skill == 'software' %}triaged{% else %}inprogress{% endif %}" style="margin-right:3px;">
+            {{ skill.get_skill_display }}
+          </span>
+          {% empty %}
+          <span class="text-muted">—</span>
+          {% endfor %}
+        </td>
+        <td>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div class="avail-dot avail-{{ tech.availability }}"></div>
+            <span style="font-size:13px;">{{ tech.get_availability_display }}</span>
+          </div>
+        </td>
+        <td>
+          <span class="text-mono" style="font-size:14px;font-weight:600;{% if tech.open_ticket_count >= 9 %}color:#f87171;{% elif tech.open_ticket_count >= 6 %}color:#fb923c;{% else %}color:#4ade80;{% endif %}">
+            {{ tech.open_ticket_count }}
+          </span>
+          <span class="text-muted"> / 10</span>
+        </td>
+
+        <!-- ★ Rating column -->
+        <td id="rating-cell-{{ tech.id }}">
+          {% if tech.avg_rating %}
+            <div style="display:flex;align-items:center;gap:5px;">
+              <span style="color:#fbbf24;font-size:15px;letter-spacing:-1px;">
+                {% with r=tech.avg_rating %}
+                  {% for i in "12345" %}
+                    {% if forloop.counter <= r %}★{% else %}☆{% endif %}
+                  {% endfor %}
+                {% endwith %}
+              </span>
+              <span style="font-size:11px;color:var(--muted);">{{ tech.avg_rating }}/5 ({{ tech.rating_count }})</span>
+            </div>
+          {% else %}
+            <span class="text-muted" style="font-size:12px;">No ratings yet</span>
+          {% endif %}
+        </td>
+
+        <td>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            {% if user.is_superuser %}
+            <a href="/admin/tickets/technician/{{ tech.id }}/change/" class="btn btn-ghost" style="padding:4px 10px;font-size:11px;">Edit</a>
+            {% endif %}
+            <a href="{% url 'ticket_list' %}?technician={{ tech.id }}" class="btn btn-ghost" style="padding:4px 10px;font-size:11px;">View Tickets</a>
+            {% if user.is_superuser %}
+            <button class="btn btn-primary" style="padding:4px 10px;font-size:11px;"
+              onclick="openRateModal({{ tech.id }}, '{{ tech.name }}')">
+              ★ Rate
+            </button>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="8" class="text-muted" style="text-align:center;padding:32px;">
+          No technicians yet. <a href="/admin/tickets/technician/add/" style="color:#60a5fa;">Add one via Django Admin →</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Availability summary -->
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
+  <div class="stat-card sc-green">
+    <div class="stat-label">Available</div>
+    <div class="stat-value sv-green">
+      {% with count=0 %}
+      {% for t in technicians %}{% if t.availability == 'available' %}{% with count=count|add:1 %}{% endwith %}{% endif %}{% endfor %}
+      {{ technicians|length }}
+      {% endwith %}
+    </div>
+    <div class="stat-delta">Ready to accept tickets</div>
+  </div>
+  <div class="stat-card sc-orange">
+    <div class="stat-label">Busy</div>
+    <div class="stat-value sv-orange">
+      {% for t in technicians %}{% if t.availability == 'busy' %}B{% endif %}{% endfor %}
+    </div>
+    <div class="stat-delta">At or near capacity</div>
+  </div>
+  <div class="stat-card sc-blue">
+    <div class="stat-label">Total Technicians</div>
+    <div class="stat-value sv-blue">{{ technicians.count }}</div>
+    <div class="stat-delta">Registered in system</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- Rating Modal (superuser only)                              -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+{% if user.is_superuser %}
+<div id="rate-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:900;align-items:center;justify-content:center;">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--rad2);padding:32px 36px;width:380px;max-width:95vw;box-shadow:0 25px 60px rgba(0,0,0,.5);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div>
+        <div style="font-family:var(--head);font-size:17px;font-weight:700;">Rate Technician</div>
+        <div id="rate-modal-name" style="font-size:13px;color:var(--muted);margin-top:2px;"></div>
+      </div>
+      <button onclick="closeRateModal()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:20px;line-height:1;">✕</button>
+    </div>
+
+    <!-- Star picker -->
+    <div style="text-align:center;margin-bottom:18px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Select Rating</div>
+      <div id="star-picker" style="display:flex;justify-content:center;gap:10px;">
+        {% for i in "12345" %}
+        <button class="star-btn" data-val="{{ forloop.counter }}"
+          style="font-size:34px;background:none;border:none;cursor:pointer;color:#475569;transition:color .15s,transform .15s;"
+          onmouseenter="hoverStars({{ forloop.counter }})"
+          onmouseleave="resetStars()"
+          onclick="selectStar({{ forloop.counter }})">★</button>
+        {% endfor %}
+      </div>
+      <div id="star-label" style="font-size:12px;color:var(--muted);margin-top:8px;height:18px;"></div>
+    </div>
+
+    <!-- Comment -->
+    <div style="margin-bottom:18px;">
+      <label style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);">Comment (optional)</label>
+      <textarea id="rate-comment" rows="3"
+        style="width:100%;margin-top:6px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--rad);color:var(--fg);padding:8px 12px;font-size:13px;resize:vertical;box-sizing:border-box;"
+        placeholder="Describe the technician's performance…"></textarea>
+    </div>
+
+    <div id="rate-error" style="display:none;color:#f87171;font-size:12px;margin-bottom:10px;"></div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button onclick="closeRateModal()" class="btn btn-ghost">Cancel</button>
+      <button onclick="submitRating()" class="btn btn-primary" id="rate-submit-btn">Submit Rating</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const STAR_LABELS = ['','Poor','Below Average','Average','Good','Excellent'];
+let currentTechId = null;
+let selectedStar = 0;
+
+function openRateModal(techId, techName) {
+  currentTechId = techId;
+  selectedStar = 0;
+  document.getElementById('rate-modal-name').textContent = techName;
+  document.getElementById('rate-comment').value = '';
+  document.getElementById('rate-error').style.display = 'none';
+  resetStars();
+  document.getElementById('rate-modal-overlay').style.display = 'flex';
+}
+
+function closeRateModal() {
+  document.getElementById('rate-modal-overlay').style.display = 'none';
+}
+
+function hoverStars(val) {
+  document.querySelectorAll('.star-btn').forEach((btn, i) => {
+    btn.style.color = i < val ? '#fbbf24' : '#475569';
+    btn.style.transform = i < val ? 'scale(1.15)' : 'scale(1)';
+  });
+  document.getElementById('star-label').textContent = STAR_LABELS[val];
+}
+
+function resetStars() {
+  document.querySelectorAll('.star-btn').forEach((btn, i) => {
+    btn.style.color = i < selectedStar ? '#fbbf24' : '#475569';
+    btn.style.transform = i < selectedStar ? 'scale(1.1)' : 'scale(1)';
+  });
+  document.getElementById('star-label').textContent = selectedStar ? STAR_LABELS[selectedStar] : '';
+}
+
+function selectStar(val) {
+  selectedStar = val;
+  resetStars();
+}
+
+async function submitRating() {
+  if (!selectedStar) {
+    document.getElementById('rate-error').textContent = 'Please select a star rating.';
+    document.getElementById('rate-error').style.display = 'block';
+    return;
+  }
+  const comment = document.getElementById('rate-comment').value.trim();
+  const btn = document.getElementById('rate-submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+
+  try {
+    const resp = await fetch(`/api/technicians/${currentTechId}/rate/`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')},
+      body: JSON.stringify({rating: selectedStar, comment}),
+    });
+    const data = await resp.json();
+    if (data.ok) {
+      closeRateModal();
+      // Update rating cell in-place
+      const cell = document.getElementById(`rating-cell-${currentTechId}`);
+      if (cell) {
+        const avg = data.avg_rating;
+        const cnt = data.rating_count;
+        const stars = [1,2,3,4,5].map(i => i <= Math.round(avg) ? '★' : '☆').join('');
+        cell.innerHTML = `<div style="display:flex;align-items:center;gap:5px;">
+          <span style="color:#fbbf24;font-size:15px;letter-spacing:-1px;">${stars}</span>
+          <span style="font-size:11px;color:var(--muted);">${avg}/5 (${cnt})</span>
+        </div>`;
+      }
+    } else {
+      document.getElementById('rate-error').textContent = data.error || 'Failed to submit rating.';
+      document.getElementById('rate-error').style.display = 'block';
+    }
+  } catch (e) {
+    document.getElementById('rate-error').textContent = 'Network error. Please try again.';
+    document.getElementById('rate-error').style.display = 'block';
+  }
+  btn.disabled = false;
+  btn.textContent = 'Submit Rating';
+}
+
+function getCookie(name) {
+  let v = null;
+  document.cookie.split(';').forEach(c => {
+    const [k, val] = c.trim().split('=');
+    if (k === name) v = decodeURIComponent(val);
+  });
+  return v;
+}
+
+// Close on overlay click
+document.getElementById('rate-modal-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeRateModal();
+});
+</script>
+{% endif %}
+{% endblock %}
