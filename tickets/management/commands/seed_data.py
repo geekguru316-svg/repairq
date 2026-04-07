@@ -28,6 +28,7 @@ class Command(BaseCommand):
             ('allan',   'Engr. Allan C.', 'Abella',     'allan.abella@company.com',      'IT Support', '#10b981', 'AA', ['hardware', 'network', 'security']),
         ]
 
+        techs_dict = {}
         for uname, fname, lname, email, dept, color, initials, skills in real_techs:
             # Django user account
             u, _ = User.objects.get_or_create(username=uname)
@@ -56,6 +57,7 @@ class Command(BaseCommand):
             TechnicianSkill.objects.filter(technician=tech).delete()
             for skill in skills:
                 TechnicianSkill.objects.create(technician=tech, skill=skill)
+            techs_dict[uname] = tech
 
         # ── Demo regular users ────────────────────────────────────────────────
         users = {}
@@ -72,56 +74,36 @@ class Command(BaseCommand):
             u.save()
             users[uname] = u
 
-        # ── Demo additional technicians ───────────────────────────────────────
-        demo_techs_data = [
-            ('Joel Reyes',  'joel.reyes@repairq.com',  'Infrastructure', 'available', '#ca8a04', ['hardware', 'network']),
-            ('Sara Lim',    'sara.lim@repairq.com',    'IT Support',     'busy',      '#dc2626', ['network', 'software']),
-            ('Aida Kwan',   'aida.kwan@repairq.com',   'Security',       'busy',      '#475569', ['security', 'network']),
-        ]
-
-        demo_techs = {}
-        for name, email, dept, avail, color, skills in demo_techs_data:
-            t, _ = Technician.objects.get_or_create(email=email, defaults={
-                'name': name, 'department': dept,
-                'availability': avail, 'color': color,
-            })
-            t.name = name; t.availability = avail; t.color = color
-            t.save()
-            TechnicianSkill.objects.filter(technician=t).delete()
-            for skill in skills:
-                TechnicianSkill.objects.create(technician=t, skill=skill)
-            demo_techs[name] = t
-
         # ── Sample tickets ────────────────────────────────────────────────────
         now = timezone.now()
         tickets_data = [
             ('Server room AC failure',
              'The air conditioning unit in Server Room B1 stopped functioning. Room temperature rising rapidly.',
-             'critical', 'hardware', 'in_progress', demo_techs['Joel Reyes'],
+             'critical', 'hardware', 'in_progress', techs_dict['allan'],
              now - timedelta(hours=2), now - timedelta(hours=2) + timedelta(hours=4),
              users['rico'], 'Rico Domingo'),
 
             ('Network printer offline — Floor 3',
              'The shared printer on Floor 3 is offline. Users cannot print documents.',
-             'high', 'network', 'assigned', demo_techs['Joel Reyes'],
+             'high', 'network', 'assigned', techs_dict['allan'],
              now - timedelta(hours=3), now - timedelta(hours=3) + timedelta(hours=8),
              users['ana'], 'Ana Cruz'),
 
             ('VPN authentication error',
              'Unable to authenticate to corporate VPN after password reset.',
-             'high', 'software', 'in_progress', demo_techs['Sara Lim'],
+             'high', 'software', 'in_progress', techs_dict['jayson'],
              now - timedelta(hours=5), now - timedelta(hours=5) + timedelta(hours=8),
              users['miguel'], 'Miguel Santos'),
 
             ('Database connection timeout',
              'Production database returning connection timeouts intermittently.',
-             'critical', 'network', 'in_progress', demo_techs['Aida Kwan'],
+             'critical', 'network', 'in_progress', techs_dict['arjun'],
              now - timedelta(days=1), now - timedelta(days=1) + timedelta(hours=4),
              users['rico'], 'Rico Domingo'),
 
             ('Antivirus definitions outdated',
              'Security scan flagging antivirus definitions are 14 days out of date on 12 workstations.',
-             'high', 'security', 'assigned', demo_techs['Aida Kwan'],
+             'high', 'security', 'assigned', techs_dict['arjun'],
              now - timedelta(hours=10), now - timedelta(hours=10) + timedelta(hours=8),
              users['linda'], 'Linda Reyes'),
         ]
