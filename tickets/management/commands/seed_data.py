@@ -23,12 +23,12 @@ class Command(BaseCommand):
 
         # ── Real technician Django accounts ───────────────────────────────────
         real_techs = [
-            ('jayson',  'Jayson W.',      'Cabradilla', 'jayson.cabradilla@company.com', 'IT Support', '#8b5cf6', ['hardware', 'network', 'software']),
-            ('arjun',   'Arjun',          'Haincadto',  'geekguru316@gmail.com',         'IT Support', '#f59e0b', ['hardware', 'other', 'software']),
-            ('allan',   'Engr. Allan C.', 'Abella',     'allan.abella@company.com',      'IT Support', '#10b981', ['hardware', 'network', 'security']),
+            ('jayson',  'Jayson W.',      'Cabradilla', 'jayson.cabradilla@company.com', 'IT Support', '#8b5cf6', 'JC', ['hardware', 'network', 'software']),
+            ('arjun',   'Arjun',          'Haincadto',  'geekguru316@gmail.com',         'IT Support', '#f59e0b', 'AH', ['hardware', 'other', 'software']),
+            ('allan',   'Engr. Allan C.', 'Abella',     'allan.abella@company.com',      'IT Support', '#10b981', 'AA', ['hardware', 'network', 'security']),
         ]
 
-        for uname, fname, lname, email, dept, color, skills in real_techs:
+        for uname, fname, lname, email, dept, color, initials, skills in real_techs:
             # Django user account
             u, _ = User.objects.get_or_create(username=uname)
             u.set_password('tech123')
@@ -44,11 +44,13 @@ class Command(BaseCommand):
                 'department': dept,
                 'availability': 'available',
                 'color': color,
+                'initials': initials,
             })
             tech.name = f'{fname} {lname}'
             tech.user = u
             tech.department = dept
             tech.color = color
+            tech.initials = initials
             tech.save()
 
             TechnicianSkill.objects.filter(technician=tech).delete()
