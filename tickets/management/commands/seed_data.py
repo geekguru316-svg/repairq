@@ -60,76 +60,12 @@ class Command(BaseCommand):
             techs_dict[uname] = tech
 
         # ── Demo regular users ────────────────────────────────────────────────
-        users = {}
-        for uname, fname, lname in [
-            ('rico',   'Rico',   'Domingo'),
-            ('ana',    'Ana',    'Cruz'),
-            ('miguel', 'Miguel', 'Santos'),
-            ('linda',  'Linda',  'Reyes'),
-        ]:
-            u, _ = User.objects.get_or_create(username=uname)
-            u.set_password('password')
-            u.first_name = fname
-            u.last_name = lname
-            u.save()
-            users[uname] = u
-
         # ── Sample tickets ────────────────────────────────────────────────────
-        now = timezone.now()
-        tickets_data = [
-            ('Server room AC failure',
-             'The air conditioning unit in Server Room B1 stopped functioning. Room temperature rising rapidly.',
-             'critical', 'hardware', 'in_progress', techs_dict['allan'],
-             now - timedelta(hours=2), now - timedelta(hours=2) + timedelta(hours=4),
-             users['rico'], 'Rico Domingo'),
-
-            ('Network printer offline — Floor 3',
-             'The shared printer on Floor 3 is offline. Users cannot print documents.',
-             'high', 'network', 'assigned', techs_dict['allan'],
-             now - timedelta(hours=3), now - timedelta(hours=3) + timedelta(hours=8),
-             users['ana'], 'Ana Cruz'),
-
-            ('VPN authentication error',
-             'Unable to authenticate to corporate VPN after password reset.',
-             'high', 'software', 'in_progress', techs_dict['jayson'],
-             now - timedelta(hours=5), now - timedelta(hours=5) + timedelta(hours=8),
-             users['miguel'], 'Miguel Santos'),
-
-            ('Database connection timeout',
-             'Production database returning connection timeouts intermittently.',
-             'critical', 'network', 'in_progress', techs_dict['arjun'],
-             now - timedelta(days=1), now - timedelta(days=1) + timedelta(hours=4),
-             users['rico'], 'Rico Domingo'),
-
-            ('Antivirus definitions outdated',
-             'Security scan flagging antivirus definitions are 14 days out of date on 12 workstations.',
-             'high', 'security', 'assigned', techs_dict['arjun'],
-             now - timedelta(hours=10), now - timedelta(hours=10) + timedelta(hours=8),
-             users['linda'], 'Linda Reyes'),
-        ]
-
-        for title, desc, pri, cat, status, tech, created, sla_due, user, req_name in tickets_data:
-            if Ticket.objects.filter(title=title).exists():
-                continue
-            t = Ticket(
-                title=title, description=desc, priority=pri, category=cat,
-                status=status, assigned_to=tech, submitted_by=user,
-                sla_due_at=sla_due, requester_name=req_name,
-            )
-            t.save()
-            if status in ('resolved', 'closed'):
-                t.resolved_at = created + timedelta(hours=3)
-            Ticket.objects.filter(pk=t.pk).update(created_at=created, resolved_at=t.resolved_at)
-
-            TicketNote.objects.create(
-                ticket=t, author=admin, note_type='status_change',
-                content='Ticket created and received.', is_internal=True,
-            )
-            if tech:
-                TicketNote.objects.create(
-                    ticket=t, author=admin, note_type='status_change',
-                    content=f'Assigned to {tech.name}.', is_internal=True,
-                )
+        # Skip creating sample tickets as users may have deleted them and we do not
+        # want them recreated on every deployment or service restart.
+        
+        # tickets_data = [ ... ] 
+        # (Demo ticket creation has been removed to prevent them from coming back)
 
         # ── Report schedules ──────────────────────────────────────────────────
         for name, freq in [
