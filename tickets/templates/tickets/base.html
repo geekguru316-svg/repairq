@@ -914,7 +914,6 @@
 
     <div class="sidebar-section">
       <div class="sec-label">Main</div>
-      {% if user.is_staff or user.technician %}
       <a class="nav-item {% if active_page == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
         <svg fill="none" viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.8">
           <rect x="1" y="1" width="6" height="6" rx="1" />
@@ -924,7 +923,7 @@
         </svg>
         Dashboard
       </a>
-      {% endif %}
+      {% if user.is_staff or user.technician %}
       <a class="nav-item {% if active_page == 'tickets' %}active{% endif %}" href="{% url 'ticket_list' %}">
         <svg fill="none" viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.8">
           <path d="M2 4h12M2 8h8M2 12h6" />
@@ -932,6 +931,7 @@
         </svg>
         {% if user.is_superuser %}Ticket Queue{% elif user.technician %}My Assignments{% else %}My Tickets{% endif %}
       </a>
+      {% endif %}
       {% if user.is_superuser %}
       <a class="nav-item {% if active_page == 'assign' %}active{% endif %}" href="{% url 'assignments' %}">
         <svg fill="none" viewBox="0 0 16 16" stroke="currentColor" stroke-width="1.8">
@@ -981,8 +981,7 @@
       <div class="user-avatar">{{ user.first_name.0 }}{{ user.last_name.0 }}</div>
       <div>
         <div class="user-name">{{ user.get_full_name|default:user.username }}</div>
-        <div class="user-role">{% if user.is_superuser %}Administrator{% elif user.technician %}Technician{% else
-          %}Staff / User{% endif %}</div>
+        <div class="user-role">{% if user.is_superuser %}Administrator{% elif user.technician %}Technician{% else %}Customer{% endif %}</div>
       </div>
     </div>
   </nav>

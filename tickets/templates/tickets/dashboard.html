@@ -2,7 +2,20 @@
 {% block title %}Dashboard{% endblock %}
 {% block page_title %}Dashboard{% endblock %}
 
+{% block topbar_actions %}
+{% if not is_customer %}
+<a class="btn btn-primary" href="{% url 'ticket_create' %}">
+  <svg fill="none" viewBox="0 0 14 14" stroke="currentColor" stroke-width="2.5">
+    <path d="M7 2v10M2 7h10" />
+  </svg>
+  New Ticket
+</a>
+{% endif %}
+<a class="btn btn-ghost" href="{% url 'logout' %}">Logout</a>
+{% endblock %}
+
 {% block content %}
+{% if not is_customer %}
 {% if overdue_tickets %}
 <div class="alert alert-danger">
   <svg fill="none" viewBox="0 0 16 16" stroke="currentColor" stroke-width="2"><path d="M8 2L1 14h14L8 2zm0 4v4M8 12h.01"/></svg>
@@ -37,19 +50,22 @@
     <div class="stat-delta">Closed today</div>
   </a>
 </div>
+{% endif %}
 
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
   <!-- Recent tickets -->
   <div class="card">
     <div class="card-header">
-      <div class="card-title">Recent Tickets</div>
+      <div class="card-title">{% if is_customer %}My Recent Tickets{% else %}Recent Tickets{% endif %}</div>
+      {% if not is_customer %}
       <a class="btn btn-ghost" style="font-size:11px;padding:4px 10px;margin-left:auto;" href="{% url 'ticket_list' %}">View all →</a>
+      {% endif %}
     </div>
     <table class="tbl">
       <thead><tr><th>ID</th><th>Issue</th><th>Priority</th><th>Status</th></tr></thead>
       <tbody>
         {% for ticket in recent_tickets %}
-        <tr onclick="location.href='{% url 'ticket_detail' ticket.ticket_id %}'">
+        <tr {% if not is_customer %}onclick="location.href='{% url 'ticket_detail' ticket.ticket_id %}'"{% endif %} style="cursor:{% if is_customer %}default{% else %}pointer{% endif %};">
           <td class="text-mono text-muted" style="font-size:12px;">{{ ticket.ticket_id|slice:"12:" }}</td>
           <td><strong>{{ ticket.title|truncatechars:35 }}</strong></td>
           <td><span class="pri pri-{{ ticket.priority }}">{{ ticket.priority|upper }}</span></td>
@@ -78,7 +94,7 @@
         <div style="width:32px;height:32px;border-radius:50%;background:{{ tech.color }};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;">{{ tech.initials }}</div>
         <div style="min-width:0;">
           <div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ tech.name }}</div>
-          <div style="font-size:11px;color:var(--muted);">{{ tech.open_ticket_count }} open</div>
+          <div style="font-size:11px;color:var(--muted);">{{ tech.get_availability_display }}</div>
         </div>
         <div style="margin-left:auto;display:flex;align-items:center;gap:4px;">
           <div class="avail-dot avail-{{ tech.availability }}"></div>

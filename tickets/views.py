@@ -40,9 +40,7 @@ def login_view(request):
         user = authenticate(request, username=request.POST.get('username'), password=request.POST.get('password'))
         if user:
             login(request, user)
-            if user.is_staff or hasattr(user, 'technician'):
-                return redirect('dashboard')
-            return redirect('index')
+            return redirect('dashboard')
         messages.error(request, 'Invalid username or password.')
     return render(request, 'tickets/login.html')
 
@@ -56,17 +54,19 @@ def logout_view(request):
 
 @login_required
 def dashboard(request):
-    # Only staff/tech should see the dashboard
-    if not request.user.is_staff and not hasattr(request.user, 'technician'):
-        return redirect('index')
-
     now = timezone.now()
     open_statuses = ['received', 'triaged', 'assigned', 'in_progress']
-    tickets_qs = Ticket.objects.all()
 
-    # Filter for technician
-    if hasattr(request.user, 'technician'):
-        tickets_qs = tickets_qs.filter(assigned_to=request.user.technician)
+    is_staff_or_tech = request.user.is_staff or hasattr(request.user, 'technician')
+
+    if is_staff_or_tech:
+        tickets_qs = Ticket.objects.all()
+        # Filter for technician
+        if hasattr(request.user, 'technician'):
+            tickets_qs = tickets_qs.filter(assigned_to=request.user.technician)
+    else:
+        # Customer: only see their own tickets
+        tickets_qs = Ticket.objects.filter(submitted_by=request.user)
 
     open_count      = tickets_qs.filter(status__in=open_statuses).count()
     in_progress     = tickets_qs.filter(status='in_progress').count()
@@ -87,6 +87,7 @@ def dashboard(request):
         'overdue_tickets': overdue_tickets,
         'technicians':    technicians,
         'active_page':    'dashboard',
+        'is_customer':    not is_staff_or_tech,
     }
     return render(request, 'tickets/dashboard.html', context)
 
