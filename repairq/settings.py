@@ -7,9 +7,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-change-this-in-production-use-env-variable'
 
-DEBUG = False
+DEBUG = os.environ.get('RENDER_DEBUG', 'True').lower() in ('true', '1')
 
-ALLOWED_HOSTS = ['122.2.21.212', '192.168.2.53', 'localhost', '127.0.0.1', '.onrender.com']
+ALLOWED_HOSTS = ['122.2.21.212', '192.168.2.53', 'localhost', '127.0.0.1', '.onrender.com', '*']
 
 INSTALLED_APPS = [
     'tickets',
@@ -99,3 +99,20 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1',
     'http://localhost',
 ]
+
+# Logging - capture errors in Render console
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+        },
+    },
+}
