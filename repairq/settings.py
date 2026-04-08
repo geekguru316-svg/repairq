@@ -7,9 +7,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-change-this-in-production-use-env-variable'
 
-DEBUG = os.environ.get('RENDER_DEBUG', 'True').lower() in ('true', '1')
+DEBUG = False
 
-ALLOWED_HOSTS = ['122.2.21.212', '192.168.2.53', 'localhost', '127.0.0.1', '.onrender.com', '*']
+ALLOWED_HOSTS = ['122.2.21.212', '192.168.2.53', 'localhost', '127.0.0.1', '.onrender.com']
 
 INSTALLED_APPS = [
     'tickets',
