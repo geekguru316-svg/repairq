@@ -1,18 +1,21 @@
 FROM python:3.11
 
-# Set unbuffered output for cleaner Docker logs
 ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# Copy requirements and install first (better caching)
+# Install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy all project files
+# Copy project
 COPY . .
 
-# Expose the default port
-EXPOSE 8000
+# Collect static files
+RUN python manage.py collectstatic --noinput
 
-# Shell wrapper ensures '&&' is handled correctly, running migrations before start
+# Expose Railway port
+EXPOSE 8080
+
+# Start app + run migrations
+CMD ["sh", "-c", "python manage.py migrate && gunicorn repairq.wsgi:application --bind 0.0.0.0:8080"]
