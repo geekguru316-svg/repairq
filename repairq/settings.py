@@ -9,7 +9,12 @@ SECRET_KEY = 'django-insecure-change-this-in-production-use-env-variable'
 
 DEBUG = False
 
-ALLOWED_HOSTS = ['122.2.21.212', '192.168.2.53', 'localhost', '127.0.0.1', '.onrender.com']
+ALLOWED_HOSTS = [
+    '.railway.app',
+    'repairq.com',
+    'www.repairq.com',
+    'app.repairq.com',
+]
 
 INSTALLED_APPS = [
     'tickets',
