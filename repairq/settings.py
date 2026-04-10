@@ -11,7 +11,7 @@ DEBUG = False
 
 ALLOWED_HOSTS = [
     '.railway.app',
-    'repairq.com',
+    'repairq-production.up.railway.app',
     'www.repairq.com',
     'app.repairq.com',
 ]
@@ -100,8 +100,7 @@ LOGOUT_REDIRECT_URL = 'index'
 
 # Common for NAS/Proxy environments
 CSRF_TRUSTED_ORIGINS = [
-    'https://repairq.com',
-    'https://www.repairq.com',
+   'https://repairq-production.up.railway.app',
     'https://app.repairq.com',
 ]
 
