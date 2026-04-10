@@ -100,12 +100,9 @@ LOGOUT_REDIRECT_URL = 'index'
 
 # Common for NAS/Proxy environments
 CSRF_TRUSTED_ORIGINS = [
-    'https://*.onrender.com',
-    'http://122.2.21.212',
-    'http://*.local',
-    'http://192.168.*',
-    'http://127.0.0.1',
-    'http://localhost',
+    'https://repairq.com',
+    'https://www.repairq.com',
+    'https://app.repairq.com',
 ]
 
 # Logging - capture errors in Render console
