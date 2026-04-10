@@ -100,7 +100,7 @@ LOGOUT_REDIRECT_URL = 'index'
 
 # Common for NAS/Proxy environments
 CSRF_TRUSTED_ORIGINS = [
-   'https://repairq.up.railway.app',
+    'https://repairq.up.railway.app',
     'https://app.repairq.com',
 ]
 
