@@ -5,16 +5,11 @@ import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.environ.get('SECRET_KEY', 'fallback-secret')
+SECRET_KEY = 'django-insecure-change-this-in-production-use-env-variable'
 
-DEBUG = os.environ.get('DEBUG', 'False') == 'True'
+DEBUG = False
 
-ALLOWED_HOSTS = [
-    '.railway.app',
-    'repairq.up.railway.app',
-    'www.repairq.com',
-    'app.repairq.com',
-]
+ALLOWED_HOSTS = ['122.2.21.212', '192.168.2.53', 'localhost', '127.0.0.1', '.onrender.com']
 
 INSTALLED_APPS = [
     'tickets',
@@ -28,7 +23,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # ✅ correct placement
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -36,7 +31,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-
 
 ROOT_URLCONF = 'repairq.urls'
 
@@ -58,22 +52,27 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'repairq.wsgi.application'
 
+# Database configuration
 DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL'),
-        conn_max_age=600,
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
 
-# Use PostgreSQL if DATABASE_URL is set and valid (e.g. on Render)
-database_url = os.environ.get('DATABASE_URL', '').strip()
-VALID_SCHEMES = ('postgres://', 'postgresql://', 'postgis://')
-if database_url and any(database_url.startswith(s) for s in VALID_SCHEMES):
+# Use PostgreSQL on Render if DATABASE_URL is available
+database_url = os.environ.get('DATABASE_URL')
+if database_url:
     try:
-        db_from_env = dj_database_url.parse(database_url, conn_max_age=600)
-        DATABASES['default'].update(db_from_env)
-    except Exception:
-        pass  # Fall back to SQLite if URL is malformed
+        import dj_database_url
+        DATABASES['default'] = dj_database_url.config(
+            default=database_url,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
+    except Exception as e:
+        print(f"Warning: Database URL found but could not be parsed: {e}")
+        # Fallback to SQLite already configured above
 
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -88,10 +87,8 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_URL = 'login'
@@ -100,8 +97,12 @@ LOGOUT_REDIRECT_URL = 'index'
 
 # Common for NAS/Proxy environments
 CSRF_TRUSTED_ORIGINS = [
-    'https://repairq.up.railway.app',
-    'https://app.repairq.com',
+    'https://*.onrender.com',
+    'http://122.2.21.212',
+    'http://*.local',
+    'http://192.168.*',
+    'http://127.0.0.1',
+    'http://localhost',
 ]
 
 # Logging - capture errors in Render console
