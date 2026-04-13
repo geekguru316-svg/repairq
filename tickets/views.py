@@ -262,32 +262,46 @@ def ticket_create(request):
     technicians = Technician.objects.filter(availability='available')
 
     if request.method == 'POST':
-        ticket = Ticket(
-            title=request.POST['title'],
-            requester_name=request.POST['requester_name'],
-            description=request.POST['description'],
-            category=request.POST['category'],
-            priority=request.POST['priority'],
-            location=request.POST.get('location', ''),
-            submitted_by=request.user,
-            status='received',
-        )
-        # Only admin (superuser) can directly assign a technician
-        if request.user.is_superuser:
-            tech_id = request.POST.get('assigned_to')
-            if tech_id:
-                ticket.assigned_to_id = tech_id
-                ticket.status = 'assigned'
-        ticket.save()
+        try:
+            ticket = Ticket(
+                title=request.POST['title'],
+                requester_name=request.POST['requester_name'],
+                description=request.POST['description'],
+                category=request.POST['category'],
+                priority=request.POST['priority'],
+                location=request.POST.get('location', ''),
+                submitted_by=request.user,
+                status='received',
+            )
+            # Only admin (superuser) can directly assign a technician
+            if request.user.is_superuser:
+                tech_id = request.POST.get('assigned_to')
+                if tech_id:
+                    ticket.assigned_to_id = tech_id
+                    ticket.status = 'assigned'
+            ticket.save()
 
-        TicketNote.objects.create(
-            ticket=ticket, author=request.user,
-            note_type='status_change',
-            content='Ticket created and received.',
-            is_internal=True,
-        )
-        messages.success(request, f'Ticket {ticket.ticket_id} created successfully.')
-        return redirect('ticket_detail', ticket_id=ticket.ticket_id)
+            TicketNote.objects.create(
+                ticket=ticket, author=request.user,
+                note_type='status_change',
+                content='Ticket created and received.',
+                is_internal=True,
+            )
+            
+            success_msg = f'Ticket {ticket.ticket_id} created successfully.'
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'ok': True,
+                    'message': success_msg,
+                    'redirect_url': f'/tickets/{ticket.ticket_id}/'
+                })
+            
+            messages.success(request, success_msg)
+            return redirect('ticket_detail', ticket_id=ticket.ticket_id)
+        except Exception as e:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'ok': False, 'error': str(e)})
+            raise e
 
     context = {
         'technicians': technicians,
@@ -295,6 +309,10 @@ def ticket_create(request):
         'categories': Ticket.CATEGORY_CHOICES,
         'priorities': Ticket.PRIORITY_CHOICES,
     }
+    
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return render(request, 'tickets/partials/ticket_form.html', context)
+        
     return render(request, 'tickets/ticket_create.html', context)
 
 
