@@ -889,6 +889,111 @@
         opacity: 1
       }
     }
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal-container {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--rad2);
+      width: 100%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      transform: translateY(20px);
+      transition: all 0.3s;
+    }
+
+    .modal-overlay.active .modal-container {
+      transform: translateY(0);
+    }
+
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      background: var(--bg2);
+      z-index: 10;
+    }
+
+    .modal-title {
+      font-family: var(--head);
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 24px;
+      cursor: pointer;
+      transition: color 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+    }
+
+    .modal-close:hover {
+      color: var(--text);
+      background: var(--bg3);
+    }
+
+    .modal-body {
+      padding: 24px;
+    }
+
+    .modal-loader {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px;
+      gap: 16px;
+      color: var(--muted);
+    }
+
+    .spinner {
+      width: 30px;
+      height: 30px;
+      border: 3px solid var(--bg4);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
   </style>
   {% block extra_head %}{% endblock %}
 </head>
@@ -1004,7 +1109,7 @@
           </svg>
         </div>
         {% block topbar_actions %}
-        <a class="btn btn-primary" href="{% url 'ticket_create' %}">
+        <a class="btn btn-primary" href="{% url 'ticket_create' %}" onclick="openTicketModal(event)">
           <svg fill="none" viewBox="0 0 14 14" stroke="currentColor" stroke-width="2.5">
             <path d="M7 2v10M2 7h10" />
           </svg>
@@ -1092,6 +1197,22 @@
   </footer>
   {% endif %}
 
+  <!-- Ticket Modal -->
+  <div id="ticket-modal" class="modal-overlay">
+    <div class="modal-container">
+      <div class="modal-header">
+        <div class="modal-title">New Repair Request</div>
+        <button class="modal-close" onclick="closeTicketModal()">&times;</button>
+      </div>
+      <div id="modal-content" class="modal-body">
+        <div class="modal-loader">
+          <div class="spinner"></div>
+          <p>Loading form...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="toast-container"></div>
   <audio id="notif-sound" preload="auto">
     <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
@@ -1114,6 +1235,102 @@
           localStorage.setItem('theme', isLight ? 'light' : 'dark');
         });
       }
+    });
+  </script>
+
+  <script>
+    function openTicketModal(e) {
+      if (e) e.preventDefault();
+      const modal = document.getElementById('ticket-modal');
+      const content = document.getElementById('modal-content');
+      
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+
+      // Load form via AJAX
+      fetch('{% url "ticket_create" %}', {
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(response => response.text())
+      .then(html => {
+        content.innerHTML = html;
+        // Re-bind form submission
+        const form = content.querySelector('form');
+        if (form) {
+          form.addEventListener('submit', handleTicketSubmit);
+        }
+      })
+      .catch(err => {
+        content.innerHTML = '<div class="alert alert-danger">Failed to load form. Please try again.</div>';
+      });
+    }
+
+    function closeTicketModal() {
+      const modal = document.getElementById('ticket-modal');
+      modal.classList.remove('active');
+      document.body.style.overflow = '';
+      // Reset content after animation
+      setTimeout(() => {
+        document.getElementById('modal-content').innerHTML = `
+          <div class="modal-loader">
+            <div class="spinner"></div>
+            <p>Loading form...</p>
+          </div>
+        `;
+      }, 300);
+    }
+
+    function handleTicketSubmit(e) {
+      e.preventDefault();
+      const form = e.target;
+      const formData = new FormData(form);
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const originalBtnHtml = submitBtn.innerHTML;
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px;"></div> Submitting...';
+
+      fetch(form.action || '{% url "ticket_create" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+        }
+      })
+      .then(response => {
+        if (response.redirected) {
+          window.location.href = response.url;
+          return;
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (data && data.ok) {
+          window.location.href = data.redirect_url;
+        } else if (data && data.error) {
+          alert('Error: ' + data.error);
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalBtnHtml;
+        }
+      })
+      .catch(err => {
+        console.error('Submission failed', err);
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnHtml;
+      });
+    }
+
+    // Close modal on escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeTicketModal();
+    });
+
+    // Close modal on click outside
+    document.getElementById('ticket-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'ticket-modal') closeTicketModal();
     });
   </script>
 

@@ -21,7 +21,7 @@
 
 {% block topbar_actions %}
 <a class="btn btn-ghost" href="{% url 'ticket_list' %}">← Back to Queue</a>
-<a class="btn btn-primary" href="{% url 'ticket_create' %}">
+<a class="btn btn-primary" href="{% url 'ticket_create' %}" onclick="openTicketModal(event)">
   <svg fill="none" viewBox="0 0 14 14" stroke="currentColor" stroke-width="2.5"><path d="M7 2v10M2 7h10"/></svg>
   New Ticket
 </a>
